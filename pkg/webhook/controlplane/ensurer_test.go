@@ -307,6 +307,9 @@ var _ = Describe("Ensurer", func() {
 							ReadOnly:  true,
 						},
 					},
+					SecurityContext: &corev1.SecurityContext{
+						AllowPrivilegeEscalation: ptr.To(false),
+					},
 				}))
 				Expect(deployment.Spec.Template.Spec.Volumes).To(ContainElement(corev1.Volume{
 					Name: "cloudprovider",
