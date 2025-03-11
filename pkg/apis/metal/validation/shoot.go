@@ -4,11 +4,16 @@
 package validation
 
 import (
+	"encoding/json"
+	"slices"
+
 	"github.com/gardener/gardener/pkg/apis/core"
 	"github.com/gardener/gardener/pkg/apis/core/helper"
 	validationutils "github.com/gardener/gardener/pkg/utils/validation"
 	apivalidation "k8s.io/apimachinery/pkg/api/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+
+	metalv1alpha1 "github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/apis/metal/v1alpha1"
 )
 
 // ValidateNetworking validates the network settings of a Shoot.
@@ -23,7 +28,7 @@ func ValidateNetworking(networking *core.Networking, fldPath *field.Path) field.
 }
 
 // ValidateWorkers validates the workers of a Shoot.
-func ValidateWorkers(workers []core.Worker, fldPath *field.Path) field.ErrorList {
+func ValidateWorkers(workers []core.Worker, fldPath *field.Path, shootSpec *core.ShootSpec) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	for i, worker := range workers {
@@ -38,6 +43,22 @@ func ValidateWorkers(workers []core.Worker, fldPath *field.Path) field.ErrorList
 		if len(worker.Zones) == 0 {
 			allErrs = append(allErrs, field.Required(workerFldPath.Child("zones"), "at least one zone must be configured"))
 			continue
+		}
+
+		if worker.ProviderConfig != nil {
+			var workerConfig metalv1alpha1.WorkerConfig
+			if err := json.Unmarshal(worker.ProviderConfig.Raw, &workerConfig); err != nil {
+				allErrs = append(allErrs, field.Invalid(workerFldPath.Child("providerConfig"), worker.ProviderConfig.Raw, "could not unmarshal worker provider config"))
+			}
+
+			if workerConfig.ExtraIgnition != nil && workerConfig.ExtraIgnition.SecretRef != "" {
+				contained := slices.ContainsFunc(shootSpec.Resources, func(resource core.NamedResourceReference) bool {
+					return resource.Name == workerConfig.ExtraIgnition.SecretRef
+				})
+				if !contained {
+					allErrs = append(allErrs, field.Invalid(workerFldPath.Child("providerConfig").Child("extraIgnition").Child("secretRef"), workerConfig.ExtraIgnition.SecretRef, "secretRef must reference a secret in the shoot's resources"))
+				}
+			}
 		}
 
 	}

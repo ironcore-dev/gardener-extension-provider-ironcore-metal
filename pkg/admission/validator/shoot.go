@@ -78,7 +78,7 @@ func (s *shoot) validateContext(valContext *validationContext) field.ErrorList {
 
 	allErrors = append(allErrors, metalvalidation.ValidateNetworking(valContext.shoot.Spec.Networking, networkPath)...)
 	allErrors = append(allErrors, metalvalidation.ValidateInfrastructureConfig(valContext.infrastructureConfig, valContext.shoot.Spec.Networking.Nodes, valContext.shoot.Spec.Networking.Pods, valContext.shoot.Spec.Networking.Services, infrastructureConfigPath)...)
-	allErrors = append(allErrors, metalvalidation.ValidateWorkers(valContext.shoot.Spec.Provider.Workers, workersPath)...)
+	allErrors = append(allErrors, metalvalidation.ValidateWorkers(valContext.shoot.Spec.Provider.Workers, workersPath, &valContext.shoot.Spec)...)
 	allErrors = append(allErrors, metalvalidation.ValidateControlPlaneConfig(valContext.controlPlaneConfig, valContext.shoot.Spec.Kubernetes.Version, controlPlaneConfigPath)...)
 
 	return allErrors

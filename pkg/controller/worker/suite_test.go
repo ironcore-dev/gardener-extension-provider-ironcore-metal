@@ -8,11 +8,13 @@ import (
 	"fmt"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"testing"
 	"time"
 
 	extensionscontroller "github.com/gardener/gardener/extensions/pkg/controller"
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
+	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
 	gardenerextensionv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
 	gardener "github.com/gardener/gardener/pkg/client/kubernetes"
 	machinescheme "github.com/gardener/machine-controller-manager/pkg/client/clientset/versioned/scheme"
@@ -20,6 +22,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"go.uber.org/zap/zapcore"
+	autoscalingv1 "k8s.io/api/autoscaling/v1"
 	corev1 "k8s.io/api/core/v1"
 	apiextensionsscheme "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/scheme"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -163,7 +166,7 @@ func SetupTest() (*corev1.Namespace, *gardener.ChartApplier) {
 
 		*ign = corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
-				GenerateName: "testign-",
+				GenerateName: v1beta1constants.ReferencedResourcesPrefix + "testign-",
 				Namespace:    ns.Name,
 			},
 			Data: map[string][]byte{
@@ -179,11 +182,9 @@ func SetupTest() (*corev1.Namespace, *gardener.ChartApplier) {
 			},
 
 			ExtraIgnition: &apiv1alpha1.IgnitionConfig{
-				Raw: yamlString,
-				SecretRef: &corev1.LocalObjectReference{
-					Name: ign.Name,
-				},
-				Override: true,
+				Raw:       yamlString,
+				SecretRef: strings.TrimPrefix(ign.Name, v1beta1constants.ReferencedResourcesPrefix),
+				Override:  true,
 			},
 			Metadata: map[string]string{
 				"foo": "bar",
@@ -269,6 +270,16 @@ func SetupTest() (*corev1.Namespace, *gardener.ChartApplier) {
 		clusterWithoutImages = &extensionscontroller.Cluster{
 			Shoot: &gardencorev1beta1.Shoot{
 				Spec: gardencorev1beta1.ShootSpec{
+					Resources: []gardencorev1beta1.NamedResourceReference{
+						{
+							Name: strings.TrimPrefix(ign.Name, v1beta1constants.ReferencedResourcesPrefix),
+							ResourceRef: autoscalingv1.CrossVersionObjectReference{
+								Kind:       "Secret",
+								Name:       strings.TrimPrefix(ign.Name, v1beta1constants.ReferencedResourcesPrefix),
+								APIVersion: "v1",
+							},
+						},
+					},
 					Kubernetes: gardencorev1beta1.Kubernetes{
 						Version: shootVersion,
 					},

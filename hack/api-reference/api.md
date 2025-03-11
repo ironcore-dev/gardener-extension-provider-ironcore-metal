@@ -699,14 +699,12 @@ string
 <td>
 <code>secretRef</code></br>
 <em>
-<a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.26/#localobjectreference-v1-core">
-Kubernetes core/v1.LocalObjectReference
-</a>
+string
 </em>
 </td>
 <td>
 <em>(Optional)</em>
-<p>SecretRef is a reference to a secret containing the ignition config.</p>
+<p>SecretRef is a reference to a resource in the shoot spec referencing a secret containing the ignition config.</p>
 </td>
 </tr>
 <tr>

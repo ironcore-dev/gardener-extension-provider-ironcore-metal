@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/gardener/gardener/extensions/pkg/controller"
 	"github.com/gardener/gardener/extensions/pkg/controller/worker"
 	genericworkeractuator "github.com/gardener/gardener/extensions/pkg/controller/worker/genericactuator"
 	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
@@ -252,9 +253,13 @@ func (w *workerDelegate) mergeIgnitionConfig(ctx context.Context, workerConfig *
 		}
 	}
 
-	if workerConfig.ExtraIgnition.SecretRef != nil {
+	if workerConfig.ExtraIgnition.SecretRef != "" {
+		secretName, err := lookupReferencedSecret(w.cluster, workerConfig.ExtraIgnition.SecretRef)
+		if err != nil {
+			return "", err
+		}
 		secret := &corev1.Secret{}
-		secretKey := client.ObjectKey{Namespace: w.worker.Namespace, Name: workerConfig.ExtraIgnition.SecretRef.Name}
+		secretKey := client.ObjectKey{Namespace: w.worker.Namespace, Name: secretName}
 		if err := w.client.Get(ctx, secretKey, secret); err != nil {
 			return "", fmt.Errorf("failed to get ignition secret %s: %w", workerConfig.ExtraIgnition.SecretRef, err)
 		}
@@ -274,7 +279,7 @@ func (w *workerDelegate) mergeIgnitionConfig(ctx context.Context, workerConfig *
 		opt := mergo.WithAppendSlice
 
 		// merge both ignitions
-		err := mergo.Merge(rawIgnition, ignitionSecret, opt)
+		err = mergo.Merge(rawIgnition, ignitionSecret, opt)
 		if err != nil {
 			return "", err
 		}
@@ -291,4 +296,19 @@ func (w *workerDelegate) mergeIgnitionConfig(ctx context.Context, workerConfig *
 	}
 
 	return string(mergedIgnition), nil
+}
+
+func lookupReferencedSecret(cluster *controller.Cluster, refname string) (string, error) {
+	if cluster.Shoot != nil {
+		for _, ref := range cluster.Shoot.Spec.Resources {
+			if ref.Name == refname {
+				if ref.ResourceRef.Kind != "Secret" {
+					err := fmt.Errorf("invalid referenced resource, expected kind Secret, not %s: %s", ref.ResourceRef.Kind, ref.ResourceRef.Name)
+					return "", err
+				}
+				return v1beta1constants.ReferencedResourcesPrefix + ref.ResourceRef.Name, nil
+			}
+		}
+	}
+	return "", fmt.Errorf("missing or invalid referenced resource: %s", refname)
 }
