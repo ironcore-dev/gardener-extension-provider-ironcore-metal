@@ -21,7 +21,18 @@ type ControlPlaneConfig struct {
 	// LoadBalancerConfig contains configuration settings for the shoot loadbalancing.
 	// +optional
 	LoadBalancerConfig *LoadBalancerConfig `json:"loadBalancerConfig,omitempty"`
+
+	// HostnamePolicy is a policy for generating hostnames for the worker nodes.
+	HostnamePolicy HostnamePolicy `json:"hostnamePolicy,omitempty"`
 }
+
+// HostnamePolicy is a policy for generating hostnames for the worker nodes.
+type HostnamePolicy string
+
+const (
+	// HostnamePolicyServer is a policy for generating hostnames based on the Server.
+	HostnamePolicyServer HostnamePolicy = "Server"
+)
 
 // CloudControllerNetworking contains configuration settings for CCM networking.
 type CloudControllerNetworking struct {

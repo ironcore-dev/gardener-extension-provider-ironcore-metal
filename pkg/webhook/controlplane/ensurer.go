@@ -17,23 +17,29 @@ import (
 	"github.com/go-logr/logr"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
 	vpaautoscalingv1 "k8s.io/autoscaler/vertical-pod-autoscaler/pkg/apis/autoscaling.k8s.io/v1"
 	kubeletconfigv1beta1 "k8s.io/kubelet/config/v1beta1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/imagevector"
+	metalapi "github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/apis/metal"
 	"github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/metal"
 )
 
 // NewEnsurer creates a new controlplane ensurer.
-func NewEnsurer(logger logr.Logger, gardenletManagesMCM bool) genericmutator.Ensurer {
+func NewEnsurer(logger logr.Logger, scheme *runtime.Scheme) genericmutator.Ensurer {
 	return &ensurer{
-		logger: logger.WithName("metal-controlplane-ensurer"),
+		logger:  logger.WithName("ironcore-metal-controlplane-ensurer"),
+		decoder: serializer.NewCodecFactory(scheme, serializer.EnableStrict).UniversalDecoder(),
 	}
 }
 
 type ensurer struct {
 	genericmutator.NoopEnsurer
-	logger logr.Logger
+	logger  logr.Logger
+	decoder runtime.Decoder
 }
 
 // ImageVector is exposed for testing.
@@ -50,6 +56,14 @@ func (e *ensurer) EnsureMachineControllerManagerDeployment(ctx context.Context, 
 		return fmt.Errorf("failed to get cluster: %w", err)
 	}
 
+	cpConfig := &metalapi.ControlPlaneConfig{}
+	if cluster.Shoot != nil && cluster.Shoot.Spec.Provider.ControlPlaneConfig != nil {
+		cp := cluster.Shoot.Spec.Provider.ControlPlaneConfig
+		if _, _, err := e.decoder.Decode(cp.Raw, nil, cpConfig); err != nil {
+			return fmt.Errorf("could not decode providerConfig of controlplane for cluster %s: %w", client.ObjectKeyFromObject(cluster.Shoot), err)
+		}
+	}
+
 	template := &newObj.Spec.Template
 	ps := &template.Spec
 
@@ -64,7 +78,7 @@ func (e *ensurer) EnsureMachineControllerManagerDeployment(ctx context.Context, 
 	)
 
 	if c := extensionswebhook.ContainerWithName(ps.Containers, metal.MachineControllerManagerProviderIroncoreImageName); c != nil {
-		ensureMCMCommandLineArgs(c)
+		ensureMCMCommandLineArgs(c, cpConfig)
 		c.VolumeMounts = extensionswebhook.EnsureVolumeMountWithName(c.VolumeMounts, corev1.VolumeMount{
 			Name:      "cloudprovider",
 			MountPath: "/etc/metal",
@@ -131,8 +145,11 @@ func (e *ensurer) EnsureClusterAutoscalerDeployment(_ context.Context, _ extensi
 	return nil
 }
 
-func ensureMCMCommandLineArgs(c *corev1.Container) {
+func ensureMCMCommandLineArgs(c *corev1.Container, cp *metalapi.ControlPlaneConfig) {
 	c.Args = extensionswebhook.EnsureStringWithPrefix(c.Args, "--metal-kubeconfig=", "/etc/metal/kubeconfig")
+	if cp.HostnamePolicy == metalapi.NodeNamePolicyServerName {
+		c.Args = extensionswebhook.EnsureStringWithPrefix(c.Args, "--node-name-policy=", string(metalapi.NodeNamePolicyServerName))
+	}
 }
 
 func ensureKubeAPIServerCommandLineArgs(c *corev1.Container) {

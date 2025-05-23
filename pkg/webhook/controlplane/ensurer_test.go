@@ -1,10 +1,11 @@
 // SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company and IronCore contributors
 // SPDX-License-Identifier: Apache-2.0
 
-package controlplane
+package controlplane_test
 
 import (
 	"context"
+	"encoding/json"
 	"strconv"
 	"testing"
 
@@ -19,16 +20,22 @@ import (
 	gardenerutils "github.com/gardener/gardener/pkg/utils/gardener"
 	imagevectorutils "github.com/gardener/gardener/pkg/utils/imagevector"
 	testutils "github.com/gardener/gardener/pkg/utils/test"
+	"github.com/go-logr/logr"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"go.uber.org/mock/gomock"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	apiruntime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/ptr"
 
+	apismetal "github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/apis/metal"
+	"github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/apis/metal/v1alpha1"
 	"github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/metal"
+	"github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/webhook/controlplane"
 )
 
 const (
@@ -46,8 +53,7 @@ var _ = Describe("Ensurer", func() {
 	var (
 		ctx = context.TODO()
 
-		ctrl *gomock.Controller
-
+		ctrl    *gomock.Controller
 		ensurer genericmutator.Ensurer
 
 		dummyContext = gcontext.NewGardenContext(nil, nil)
@@ -70,11 +76,43 @@ var _ = Describe("Ensurer", func() {
 				},
 			},
 		)
+
+		controlPlaneConfig = &apismetal.ControlPlaneConfig{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: v1alpha1.SchemeGroupVersion.String(),
+				Kind:       "ControlPlaneConfig",
+			},
+			HostnamePolicy: apismetal.NodeNamePolicyServerName,
+		}
+		controlPlaneConfigRaw, _  = json.Marshal(controlPlaneConfig)
+		eContextK8sServerHostName = gcontext.NewInternalGardenContext(
+			&extensionscontroller.Cluster{
+				Shoot: &gardencorev1beta1.Shoot{
+					Spec: gardencorev1beta1.ShootSpec{
+						Provider: gardencorev1beta1.Provider{
+							ControlPlaneConfig: &apiruntime.RawExtension{Raw: controlPlaneConfigRaw},
+						},
+						Kubernetes: gardencorev1beta1.Kubernetes{
+							Version: "1.26.0",
+						},
+					},
+				},
+				Seed: &gardencorev1beta1.Seed{
+					ObjectMeta: metav1.ObjectMeta{
+						Annotations: map[string]string{
+							metal.LocalMetalAPIAnnotation: "true",
+						},
+					},
+				},
+			},
+		)
 	)
 
 	BeforeEach(func() {
 		ctrl = gomock.NewController(GinkgoT())
-		ensurer = NewEnsurer(logger, false)
+		scheme := runtime.NewScheme()
+		Expect(v1alpha1.AddToScheme(scheme)).To(Succeed())
+		ensurer = controlplane.NewEnsurer(logr.Discard(), scheme)
 	})
 
 	AfterEach(func() {
@@ -237,89 +275,92 @@ var _ = Describe("Ensurer", func() {
 
 	Describe("#EnsureMachineControllerManagerDeployment", func() {
 		var (
-			ensurer    genericmutator.Ensurer
 			deployment *appsv1.Deployment
 		)
 
 		BeforeEach(func() {
 			deployment = &appsv1.Deployment{ObjectMeta: metav1.ObjectMeta{Namespace: "foo"}}
+			DeferCleanup(testutils.WithVar(&controlplane.ImageVector, imagevectorutils.ImageVector{{
+				Name:       "machine-controller-manager-provider-ironcore-metal",
+				Repository: ptr.To("foo"),
+				Tag:        ptr.To[string]("bar"),
+			}}))
 		})
 
-		Context("when gardenlet manages MCM", func() {
-			BeforeEach(func() {
-				ensurer = NewEnsurer(logger, true)
-				DeferCleanup(testutils.WithVar(&ImageVector, imagevectorutils.ImageVector{{
-					Name:       "machine-controller-manager-provider-ironcore-metal",
-					Repository: ptr.To("foo"),
-					Tag:        ptr.To[string]("bar"),
-				}}))
-			})
-
-			It("should inject the sidecar container", func() {
-				Expect(deployment.Spec.Template.Spec.Containers).To(BeEmpty())
-				Expect(ensurer.EnsureMachineControllerManagerDeployment(ctx, eContextK8s, deployment, nil)).To(Succeed())
-				Expect(deployment.Spec.Template.Labels).To(HaveKeyWithValue(metal.AllowEgressToIstioIngressLabel, "allowed"))
-				Expect(deployment.Spec.Template.Spec.Containers).To(ConsistOf(corev1.Container{
-					Name:            "machine-controller-manager-provider-ironcore-metal",
-					Image:           "foo:bar",
-					ImagePullPolicy: corev1.PullIfNotPresent,
-					Args: []string{
-						"--control-kubeconfig=inClusterConfig",
-						"--machine-creation-timeout=20m",
-						"--machine-drain-timeout=2h",
-						"--machine-health-timeout=10m",
-						"--machine-safety-apiserver-statuscheck-timeout=30s",
-						"--machine-safety-apiserver-statuscheck-period=1m",
-						"--machine-safety-orphan-vms-period=30m",
-						"--namespace=" + namespace,
-						"--port=" + strconv.Itoa(portProviderMetrics),
-						"--target-kubeconfig=" + gardenerutils.PathGenericKubeconfig,
-						"--v=3",
-						"--metal-kubeconfig=/etc/metal/kubeconfig",
-					},
-					LivenessProbe: &corev1.Probe{
-						ProbeHandler: corev1.ProbeHandler{
-							HTTPGet: &corev1.HTTPGetAction{
-								Path:   "/healthz",
-								Port:   intstr.FromInt32(portProviderMetrics),
-								Scheme: corev1.URISchemeHTTP,
-							},
+		It("should inject the sidecar container", func() {
+			Expect(deployment.Spec.Template.Spec.Containers).To(BeEmpty())
+			Expect(ensurer.EnsureMachineControllerManagerDeployment(ctx, eContextK8s, deployment, nil)).To(Succeed())
+			Expect(deployment.Spec.Template.Labels).To(HaveKeyWithValue(metal.AllowEgressToIstioIngressLabel, "allowed"))
+			Expect(deployment.Spec.Template.Spec.Containers).To(ConsistOf(corev1.Container{
+				Name:            "machine-controller-manager-provider-ironcore-metal",
+				Image:           "foo:bar",
+				ImagePullPolicy: corev1.PullIfNotPresent,
+				Args: []string{
+					"--control-kubeconfig=inClusterConfig",
+					"--machine-creation-timeout=20m",
+					"--machine-drain-timeout=2h",
+					"--machine-health-timeout=10m",
+					"--machine-safety-apiserver-statuscheck-timeout=30s",
+					"--machine-safety-apiserver-statuscheck-period=1m",
+					"--machine-safety-orphan-vms-period=30m",
+					"--namespace=" + namespace,
+					"--port=" + strconv.Itoa(portProviderMetrics),
+					"--target-kubeconfig=" + gardenerutils.PathGenericKubeconfig,
+					"--v=3",
+					"--metal-kubeconfig=/etc/metal/kubeconfig",
+				},
+				LivenessProbe: &corev1.Probe{
+					ProbeHandler: corev1.ProbeHandler{
+						HTTPGet: &corev1.HTTPGetAction{
+							Path:   "/healthz",
+							Port:   intstr.FromInt32(portProviderMetrics),
+							Scheme: corev1.URISchemeHTTP,
 						},
-						InitialDelaySeconds: 30,
-						TimeoutSeconds:      5,
-						PeriodSeconds:       10,
-						SuccessThreshold:    1,
-						FailureThreshold:    3,
 					},
-					Ports: []corev1.ContainerPort{{
-						Name:          portNameProviderMetrics,
-						ContainerPort: portProviderMetrics,
-						Protocol:      corev1.ProtocolTCP,
-					}},
-					VolumeMounts: []corev1.VolumeMount{{
-						Name:      "kubeconfig",
-						MountPath: gardenerutils.VolumeMountPathGenericKubeconfig,
+					InitialDelaySeconds: 30,
+					TimeoutSeconds:      5,
+					PeriodSeconds:       10,
+					SuccessThreshold:    1,
+					FailureThreshold:    3,
+				},
+				Ports: []corev1.ContainerPort{{
+					Name:          portNameProviderMetrics,
+					ContainerPort: portProviderMetrics,
+					Protocol:      corev1.ProtocolTCP,
+				}},
+				VolumeMounts: []corev1.VolumeMount{{
+					Name:      "kubeconfig",
+					MountPath: gardenerutils.VolumeMountPathGenericKubeconfig,
+					ReadOnly:  true,
+				},
+					{
+						Name:      "cloudprovider",
+						MountPath: "/etc/metal",
 						ReadOnly:  true,
 					},
-						{
-							Name:      "cloudprovider",
-							MountPath: "/etc/metal",
-							ReadOnly:  true,
-						},
+				},
+				SecurityContext: &corev1.SecurityContext{
+					AllowPrivilegeEscalation: ptr.To(false),
+				},
+			}))
+			Expect(deployment.Spec.Template.Spec.Volumes).To(ContainElement(corev1.Volume{
+				Name: "cloudprovider",
+				VolumeSource: corev1.VolumeSource{
+					Secret: &corev1.SecretVolumeSource{
+						SecretName: "cloudprovider",
 					},
-					SecurityContext: &corev1.SecurityContext{
-						AllowPrivilegeEscalation: ptr.To(false),
-					},
-				}))
-				Expect(deployment.Spec.Template.Spec.Volumes).To(ContainElement(corev1.Volume{
-					Name: "cloudprovider",
-					VolumeSource: corev1.VolumeSource{
-						Secret: &corev1.SecretVolumeSource{
-							SecretName: "cloudprovider",
-						},
-					},
-				}))
-			})
+				},
+			}))
+		})
+
+		It("should add node name policy flag to the sidecar container", func() {
+			Expect(deployment.Spec.Template.Spec.Containers).To(BeEmpty())
+			Expect(ensurer.EnsureMachineControllerManagerDeployment(ctx, eContextK8sServerHostName, deployment, nil)).To(Succeed())
+			Expect(deployment.Spec.Template.Spec.Containers).To(
+				ContainElement(
+					HaveField("Args", ContainElement("--node-name-policy=ServerName")),
+				),
+			)
 		})
 	})
 })

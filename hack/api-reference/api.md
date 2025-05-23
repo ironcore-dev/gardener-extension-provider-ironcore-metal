@@ -144,6 +144,19 @@ LoadBalancerConfig
 <p>LoadBalancerConfig contains configuration settings for the shoot loadbalancing.</p>
 </td>
 </tr>
+<tr>
+<td>
+<code>hostnamePolicy</code></br>
+<em>
+<a href="#ironcore-metal.provider.extensions.gardener.cloud/v1alpha1.HostnamePolicy">
+HostnamePolicy
+</a>
+</em>
+</td>
+<td>
+<p>HostnamePolicy is a policy for generating hostnames for the worker nodes.</p>
+</td>
+</tr>
 </tbody>
 </table>
 <h3 id="ironcore-metal.provider.extensions.gardener.cloud/v1alpha1.BGPFilter">BGPFilter
@@ -542,6 +555,15 @@ IPAMKind
 </tr>
 </tbody>
 </table>
+<h3 id="ironcore-metal.provider.extensions.gardener.cloud/v1alpha1.HostnamePolicy">HostnamePolicy
+(<code>string</code> alias)</p></h3>
+<p>
+(<em>Appears on:</em>
+<a href="#ironcore-metal.provider.extensions.gardener.cloud/v1alpha1.ControlPlaneConfig">ControlPlaneConfig</a>)
+</p>
+<p>
+<p>HostnamePolicy is a policy for generating hostnames for the worker nodes.</p>
+</p>
 <h3 id="ironcore-metal.provider.extensions.gardener.cloud/v1alpha1.IPAMConfig">IPAMConfig
 </h3>
 <p>

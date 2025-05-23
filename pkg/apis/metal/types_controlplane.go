@@ -19,7 +19,18 @@ type ControlPlaneConfig struct {
 
 	// LoadBalancerConfig contains configuration settings for the shoot loadbalancing.
 	LoadBalancerConfig *LoadBalancerConfig
+
+	// HostnamePolicy is a policy for generating hostnames for the worker nodes.
+	HostnamePolicy NodeNamePolicy
 }
+
+// NodeNamePolicy is a policy for generating hostnames for the worker nodes.
+type NodeNamePolicy string
+
+const (
+	// NodeNamePolicyServerName is a policy for generating hostnames based on the Server.
+	NodeNamePolicyServerName NodeNamePolicy = "ServerName"
+)
 
 // CloudControllerNetworking contains configuration settings for CCM networking.
 type CloudControllerNetworking struct {
@@ -102,7 +113,7 @@ type BgpPeer struct {
 	// NodeSelector is a key-value pair to select nodes that should have this peering.
 	NodeSelector string
 
-	// Filters contains the filters for the BGP peer.
+	// Filters contain the filters for the BGP peer.
 	Filters []string
 }
 

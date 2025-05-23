@@ -33,7 +33,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	"github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/charts"
-	apismetal "github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/apis/metal"
+	metalapi "github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/apis/metal"
 	"github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/internal"
 	"github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/metal"
 )
@@ -170,7 +170,7 @@ func (vp *valuesProvider) GetConfigChartValues(
 	cp *extensionsv1alpha1.ControlPlane,
 	cluster *extensionscontroller.Cluster,
 ) (map[string]any, error) {
-	cpConfig := &apismetal.ControlPlaneConfig{}
+	cpConfig := &metalapi.ControlPlaneConfig{}
 	if cp.Spec.ProviderConfig != nil {
 		if _, _, err := vp.decoder.Decode(cp.Spec.ProviderConfig.Raw, nil, cpConfig); err != nil {
 			return nil, fmt.Errorf("could not decode providerConfig of controlplane '%s': %w", client.ObjectKeyFromObject(cp), err)
@@ -191,7 +191,7 @@ func (vp *valuesProvider) GetControlPlaneChartValues(
 	map[string]any,
 	error,
 ) {
-	cpConfig := &apismetal.ControlPlaneConfig{}
+	cpConfig := &metalapi.ControlPlaneConfig{}
 	if cp.Spec.ProviderConfig != nil {
 		if _, _, err := vp.decoder.Decode(cp.Spec.ProviderConfig.Raw, nil, cpConfig); err != nil {
 			return nil, fmt.Errorf("could not decode providerConfig of controlplane '%s': %w", client.ObjectKeyFromObject(cp), err)
@@ -212,7 +212,7 @@ func (vp *valuesProvider) GetControlPlaneShootChartValues(
 	map[string]any,
 	error,
 ) {
-	cpConfig := &apismetal.ControlPlaneConfig{}
+	cpConfig := &metalapi.ControlPlaneConfig{}
 	if cp.Spec.ProviderConfig != nil {
 		if _, _, err := vp.decoder.Decode(cp.Spec.ProviderConfig.Raw, nil, cpConfig); err != nil {
 			return nil, fmt.Errorf("could not decode providerConfig of controlplane '%s': %w", client.ObjectKeyFromObject(cp), err)
@@ -243,7 +243,7 @@ func (vp *valuesProvider) GetStorageClassesChartValues(
 
 // getControlPlaneChartValues collects and returns the control plane chart values.
 func getControlPlaneChartValues(
-	cpConfig *apismetal.ControlPlaneConfig,
+	cpConfig *metalapi.ControlPlaneConfig,
 	cp *extensionsv1alpha1.ControlPlane,
 	cluster *extensionscontroller.Cluster,
 	secretsReader secretsmanager.Reader,
@@ -268,7 +268,7 @@ func getControlPlaneChartValues(
 
 // getCCMChartValues collects and returns the CCM chart values.
 func getCCMChartValues(
-	cpConfig *apismetal.ControlPlaneConfig,
+	cpConfig *metalapi.ControlPlaneConfig,
 	cp *extensionsv1alpha1.ControlPlane,
 	cluster *extensionscontroller.Cluster,
 	secretsReader secretsmanager.Reader,
@@ -344,7 +344,7 @@ func isOverlayEnabled(networking *gardencorev1beta1.Networking) (bool, error) {
 }
 
 // getControlPlaneShootChartValues collects and returns the control plane shoot chart values.
-func (vp *valuesProvider) getControlPlaneShootChartValues(cluster *extensionscontroller.Cluster, cp *apismetal.ControlPlaneConfig) (map[string]any, error) {
+func (vp *valuesProvider) getControlPlaneShootChartValues(cluster *extensionscontroller.Cluster, cp *metalapi.ControlPlaneConfig) (map[string]any, error) {
 	if cluster.Shoot == nil {
 		return nil, fmt.Errorf("cluster %s does not contain a shoot object", cluster.ObjectMeta.Name)
 	}
@@ -367,7 +367,7 @@ func (vp *valuesProvider) getControlPlaneShootChartValues(cluster *extensionscon
 }
 
 // getConfigChartValues collects and returns the config chart values.
-func (vp *valuesProvider) getConfigChartValues(cluster *extensionscontroller.Cluster, cpConfig *apismetal.ControlPlaneConfig) (map[string]any, error) {
+func (vp *valuesProvider) getConfigChartValues(cluster *extensionscontroller.Cluster, cpConfig *metalapi.ControlPlaneConfig) (map[string]any, error) {
 	values := map[string]any{
 		metal.ClusterFieldName: cluster.ObjectMeta.Name,
 	}
@@ -393,7 +393,7 @@ func (vp *valuesProvider) getConfigChartValues(cluster *extensionscontroller.Clu
 
 // getMetallbChartValues collects and returns the MetalLB chart values.
 func getMetallbChartValues(
-	cpConfig *apismetal.ControlPlaneConfig,
+	cpConfig *metalapi.ControlPlaneConfig,
 ) (map[string]any, error) {
 	if cpConfig.LoadBalancerConfig == nil || cpConfig.LoadBalancerConfig.MetallbConfig == nil {
 		return map[string]any{
@@ -421,7 +421,7 @@ func getMetallbChartValues(
 
 // getCalicoBgpChartValues collects and returns the Calico BGP chart values.
 func getCalicoBgpChartValues(
-	cpConfig *apismetal.ControlPlaneConfig,
+	cpConfig *metalapi.ControlPlaneConfig,
 	cluster *extensionscontroller.Cluster,
 ) (map[string]any, error) {
 	if cpConfig.LoadBalancerConfig == nil || cpConfig.LoadBalancerConfig.CalicoBgpConfig == nil {
@@ -549,7 +549,7 @@ func getCalicoBgpChartValues(
 	}, nil
 }
 
-func processFilters(filtersConfig []apismetal.BGPFilterRule) ([]map[string]any, error) {
+func processFilters(filtersConfig []metalapi.BGPFilterRule) ([]map[string]any, error) {
 	var filters []map[string]any
 	for _, filter := range filtersConfig {
 		if err := parseAddressPool(filter.CIDR); err != nil {

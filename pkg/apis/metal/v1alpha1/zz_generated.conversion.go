@@ -448,6 +448,7 @@ func Convert_metal_CloudProfileConfig_To_v1alpha1_CloudProfileConfig(in *metal.C
 func autoConvert_v1alpha1_ControlPlaneConfig_To_metal_ControlPlaneConfig(in *ControlPlaneConfig, out *metal.ControlPlaneConfig, s conversion.Scope) error {
 	out.CloudControllerManager = (*metal.CloudControllerManagerConfig)(unsafe.Pointer(in.CloudControllerManager))
 	out.LoadBalancerConfig = (*metal.LoadBalancerConfig)(unsafe.Pointer(in.LoadBalancerConfig))
+	out.HostnamePolicy = metal.NodeNamePolicy(in.HostnamePolicy)
 	return nil
 }
 
@@ -459,6 +460,7 @@ func Convert_v1alpha1_ControlPlaneConfig_To_metal_ControlPlaneConfig(in *Control
 func autoConvert_metal_ControlPlaneConfig_To_v1alpha1_ControlPlaneConfig(in *metal.ControlPlaneConfig, out *ControlPlaneConfig, s conversion.Scope) error {
 	out.CloudControllerManager = (*CloudControllerManagerConfig)(unsafe.Pointer(in.CloudControllerManager))
 	out.LoadBalancerConfig = (*LoadBalancerConfig)(unsafe.Pointer(in.LoadBalancerConfig))
+	out.HostnamePolicy = HostnamePolicy(in.HostnamePolicy)
 	return nil
 }
 
