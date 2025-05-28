@@ -28,7 +28,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	apiruntime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/ptr"
 
@@ -90,7 +89,7 @@ var _ = Describe("Ensurer", func() {
 				Shoot: &gardencorev1beta1.Shoot{
 					Spec: gardencorev1beta1.ShootSpec{
 						Provider: gardencorev1beta1.Provider{
-							ControlPlaneConfig: &apiruntime.RawExtension{Raw: controlPlaneConfigRaw},
+							ControlPlaneConfig: &runtime.RawExtension{Raw: controlPlaneConfigRaw},
 						},
 						Kubernetes: gardencorev1beta1.Kubernetes{
 							Version: "1.26.0",
@@ -114,7 +113,7 @@ var _ = Describe("Ensurer", func() {
 							IPFamilies: []gardencorev1beta1.IPFamily{gardencorev1beta1.IPFamilyIPv6},
 						},
 						Provider: gardencorev1beta1.Provider{
-							ControlPlaneConfig: &apiruntime.RawExtension{Raw: controlPlaneConfigRaw},
+							ControlPlaneConfig: &runtime.RawExtension{Raw: controlPlaneConfigRaw},
 						},
 						Kubernetes: gardencorev1beta1.Kubernetes{
 							Version: "1.26.0",
