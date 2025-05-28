@@ -106,6 +106,30 @@ var _ = Describe("Ensurer", func() {
 				},
 			},
 		)
+		eContextK8sIPv6 = gcontext.NewInternalGardenContext(
+			&extensionscontroller.Cluster{
+				Shoot: &gardencorev1beta1.Shoot{
+					Spec: gardencorev1beta1.ShootSpec{
+						Networking: &gardencorev1beta1.Networking{
+							IPFamilies: []gardencorev1beta1.IPFamily{gardencorev1beta1.IPFamilyIPv6},
+						},
+						Provider: gardencorev1beta1.Provider{
+							ControlPlaneConfig: &apiruntime.RawExtension{Raw: controlPlaneConfigRaw},
+						},
+						Kubernetes: gardencorev1beta1.Kubernetes{
+							Version: "1.26.0",
+						},
+					},
+				},
+				Seed: &gardencorev1beta1.Seed{
+					ObjectMeta: metav1.ObjectMeta{
+						Annotations: map[string]string{
+							metal.LocalMetalAPIAnnotation: "true",
+						},
+					},
+				},
+			},
+		)
 	)
 
 	BeforeEach(func() {
@@ -229,6 +253,40 @@ var _ = Describe("Ensurer", func() {
 			Expect(err).To(Not(HaveOccurred()))
 
 			checkKubeControllerManagerDeployment(dep)
+		})
+
+		It("should modify node cidr flag in kube-controller-manager deployment", func() {
+			dep = &appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: v1beta1constants.DeploymentNameKubeControllerManager},
+				Spec: appsv1.DeploymentSpec{
+					Template: corev1.PodTemplateSpec{
+						ObjectMeta: metav1.ObjectMeta{
+							Labels: map[string]string{
+								v1beta1constants.LabelNetworkPolicyToBlockedCIDRs: v1beta1constants.LabelNetworkPolicyAllowed,
+							},
+						},
+						Spec: corev1.PodSpec{
+							Containers: []corev1.Container{
+								{
+									Name: "kube-controller-manager",
+									Command: []string{
+										"--cloud-provider=?",
+										"--cloud-config=?",
+									},
+								},
+							},
+						},
+					},
+				},
+			}
+
+			err := ensurer.EnsureKubeControllerManagerDeployment(ctx, eContextK8sIPv6, dep, nil)
+			Expect(err).To(Not(HaveOccurred()))
+
+			c := extensionswebhook.ContainerWithName(dep.Spec.Template.Spec.Containers, "kube-controller-manager")
+			Expect(c).To(Not(BeNil()))
+
+			Expect(c.Command).To(ContainElement("--allocate-node-cidrs=false"))
 		})
 	})
 

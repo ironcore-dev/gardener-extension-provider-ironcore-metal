@@ -6,12 +6,15 @@ package controlplane
 import (
 	"context"
 	"fmt"
+	"slices"
+	"strconv"
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/coreos/go-systemd/v22/unit"
 	extensionswebhook "github.com/gardener/gardener/extensions/pkg/webhook"
 	extensionscontextwebhook "github.com/gardener/gardener/extensions/pkg/webhook/context"
 	"github.com/gardener/gardener/extensions/pkg/webhook/controlplane/genericmutator"
+	"github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
 	"github.com/gardener/gardener/pkg/component/nodemanagement/machinecontrollermanager"
 	"github.com/go-logr/logr"
@@ -124,12 +127,22 @@ func (e *ensurer) EnsureKubeAPIServerDeployment(_ context.Context, _ extensionsc
 }
 
 // EnsureKubeControllerManagerDeployment ensures that the kube-controller-manager deployment conforms to the provider requirements.
-func (e *ensurer) EnsureKubeControllerManagerDeployment(_ context.Context, _ extensionscontextwebhook.GardenContext, new, _ *appsv1.Deployment) error {
+func (e *ensurer) EnsureKubeControllerManagerDeployment(ctx context.Context, gctx extensionscontextwebhook.GardenContext, new, _ *appsv1.Deployment) error {
 	template := &new.Spec.Template
 	ps := &template.Spec
 
+	cluster, err := gctx.GetCluster(ctx)
+	if err != nil {
+		return err
+	}
+
+	allocateNodeCIDRs := true
+	if networkingConfig := cluster.Shoot.Spec.Networking; networkingConfig != nil && slices.Contains(networkingConfig.IPFamilies, v1beta1.IPFamilyIPv6) {
+		allocateNodeCIDRs = false
+	}
+
 	if c := extensionswebhook.ContainerWithName(ps.Containers, "kube-controller-manager"); c != nil {
-		ensureKubeControllerManagerCommandLineArgs(c)
+		ensureKubeControllerManagerCommandLineArgs(c, allocateNodeCIDRs)
 	}
 
 	return nil
@@ -157,9 +170,13 @@ func ensureKubeAPIServerCommandLineArgs(c *corev1.Container) {
 	c.Command = extensionswebhook.EnsureNoStringWithPrefix(c.Command, "--cloud-config=")
 }
 
-func ensureKubeControllerManagerCommandLineArgs(c *corev1.Container) {
+func ensureKubeControllerManagerCommandLineArgs(c *corev1.Container, allocateNodeCIDRs bool) {
 	c.Command = extensionswebhook.EnsureStringWithPrefix(c.Command, "--cloud-provider=", "external")
 	c.Command = extensionswebhook.EnsureNoStringWithPrefix(c.Command, "--cloud-config=")
+
+	// allocate-node-cidrs is a boolean flag and could be enabled by name without an explicit value passed. Therefore, we delete all prefixes (without including "=" in the prefix)
+	c.Command = extensionswebhook.EnsureNoStringWithPrefix(c.Command, "--allocate-node-cidrs")
+	c.Command = extensionswebhook.EnsureStringWithPrefix(c.Command, "--allocate-node-cidrs=", strconv.FormatBool(allocateNodeCIDRs))
 }
 
 // EnsureKubeletServiceUnitOptions ensures that the kubelet.service unit options conform to the provider requirements.
