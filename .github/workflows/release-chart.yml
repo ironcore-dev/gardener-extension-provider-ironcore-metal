@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'charts/gardener-extension-provider-ironcore-metal/**'
+      - 'charts/gardener-extension-provider-ironcore-metal/**'
 
 jobs:
   release:
@@ -17,17 +20,32 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Configure Git
-        run: |
-          git config user.name "$GITHUB_ACTOR"
-          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
-
-      - name: Run chart-releaser
-        uses: afritzler/helm-oci-charts-releaser@enh/skip-gh-release
-#        uses: bitdeps/helm-oci-charts-releaser@v0.1.3
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
         with:
-          oci_registry: ghcr.io/${{ github.repository_owner }}/charts
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          oci_password: ${{ secrets.GITHUB_TOKEN }}
-          oci_username: ${{ github.actor }}
-          skip_gh_release: true
+          version: v3.16.2
+
+      - name: Log in to GitHub Container Registry
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Determine chart version
+        id: chart_version
+        run: |
+          echo "version=sha-$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_OUTPUT
+
+      - name: Package provider Helm chart
+        run: |
+          helm package charts/gardener-extension-provider-ironcore-metal --version ${{ steps.chart_version.outputs.version }}
+
+      - name: Push provider Helm chart to GHCR
+        run: |
+          helm push gardener-extension-provider-ironcore-metal-${{ steps.chart_version.outputs.version }}.tgz oci://ghcr.io/${{ github.repository_owner }}/charts
+
+      - name: Package admission Helm chart
+        run: |
+          helm package charts/gardener-extension-admission-ironcore-metal --version ${{ steps.chart_version.outputs.version }}
+
+      - name: Push admission Helm chart to GHCR
+        run: |
+          helm push gardener-extension-admission-ironcore-metal-${{ steps.chart_version.outputs.version }}.tgz oci://ghcr.io/${{ github.repository_owner }}/charts
