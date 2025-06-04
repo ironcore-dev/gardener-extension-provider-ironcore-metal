@@ -6,13 +6,12 @@ on:
       - main
     paths:
       - 'charts/gardener-extension-provider-ironcore-metal/**'
-      - 'charts/gardener-extension-provider-ironcore-metal/**'
 
 jobs:
-  release:
+  helm-chart:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
       packages: write
     steps:
       - name: Checkout
@@ -25,14 +24,24 @@ jobs:
         with:
           version: v3.16.2
 
-      - name: Log in to GitHub Container Registry
-        run: |
-          echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io -u ${{ github.actor }} --password-stdin
-
       - name: Determine chart version
         id: chart_version
         run: |
-          echo "version=sha-$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_OUTPUT
+          if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == "refs/heads/main" ]]; then
+            # Use SHA for main branch
+            CHART_VERSION="0.0.0-$(echo ${{ github.sha }} | cut -c1-7)"
+          elif [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" =~ ^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            # Use tag version (strip 'v' prefix)
+            CHART_VERSION="${GITHUB_REF#refs/tags/v}"
+          else
+            # Use PR SHA for dry run
+            CHART_VERSION="0.0.0-$(echo ${{ github.sha }} | cut -c1-7)"
+          fi
+          echo "version=$CHART_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Log in to GitHub Container Registry
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io -u ${{ github.actor }} --password-stdin
 
       - name: Package provider Helm chart
         run: |
