@@ -209,8 +209,8 @@ github.com/inconshreveable/mousetrap v1.1.0 h1:wN+x4NVGpMsO7ErUn/mUI3vEoE6Jt13X2
 github.com/inconshreveable/mousetrap v1.1.0/go.mod h1:vpF70FUmC8bwa3OWnCshd2FqLfsEA9PFc4w1p2J65bw=
 github.com/ironcore-dev/controller-utils v0.9.9 h1:SRVMjj+jh9yDZj//1hGG7U7S4fRuUVICAiXu7JBHJyo=
 github.com/ironcore-dev/controller-utils v0.9.9/go.mod h1:hNqQjd6JkRmKYH1MY1XkfT4Eew3P7etHTJjaHj+vK9Y=
-github.com/ironcore-dev/vgopath v0.1.7 h1:4QGfotAmfYnCUGMKiR+WQjB5VrjrZB88M2bec3xpF0k=
-github.com/ironcore-dev/vgopath v0.1.7/go.mod h1:tAY0zaSKrRsWHXd4rXZO/L5anW5Dp7fOcXAvp6bsGQk=
+github.com/ironcore-dev/vgopath v0.1.8 h1:1YBl1I0lPVCR2cz3R6G/6fQ8t261iiSUXmy1xypBYgM=
+github.com/ironcore-dev/vgopath v0.1.8/go.mod h1:yf4M1I+TYxvKPBKaximWBUrUBOgTa/+f7s3LL4UVCRs=
 github.com/josharian/intern v1.0.0 h1:vlS4z54oSdjm0bgjRigI+G1HpF+tI+9rE5LLzOg8HmY=
 github.com/josharian/intern v1.0.0/go.mod h1:5DoeVV0s6jJacbCEi61lwdGj/aVlrQvzHFFd8Hwg//Y=
 github.com/json-iterator/go v1.1.6/go.mod h1:+SdeFBvtyEkXs7REEP0seUULqWtbJapLOCVDaaPEHmU=
