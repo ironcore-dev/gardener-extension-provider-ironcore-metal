@@ -33,12 +33,14 @@ func New(mgr manager.Manager) (*extensionswebhook.Webhook, error) {
 		Name:     Name,
 		Path:     "/webhooks/validate",
 		Validators: map[extensionswebhook.Validator][]extensionswebhook.Type{
-			NewShootValidator(mgr):         {{Obj: &core.Shoot{}}},
-			NewCloudProfileValidator(mgr):  {{Obj: &core.CloudProfile{}}},
-			NewSecretBindingValidator(mgr): {{Obj: &core.SecretBinding{}}},
+			NewShootValidator(mgr):                  {{Obj: &core.Shoot{}}},
+			NewCloudProfileValidator(mgr):           {{Obj: &core.CloudProfile{}}},
+			NewNamespacedCloudProfileValidator(mgr): {{Obj: &core.NamespacedCloudProfile{}}},
+			NewSecretBindingValidator(mgr):          {{Obj: &core.SecretBinding{}}},
 		},
+		Target: extensionswebhook.TargetSeed,
 		ObjectSelector: &metav1.LabelSelector{
-			MatchLabels: map[string]string{"provider.extensions.gardener.cloud/ironcore-metal": "true"},
+			MatchLabels: map[string]string{constants.LabelExtensionProviderTypePrefix + metal.Type: "true"},
 		},
 	})
 }
