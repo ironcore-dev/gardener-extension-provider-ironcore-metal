@@ -836,6 +836,19 @@ CalicoBgpConfig
 <p>CalicoBgpConfig contains configuration settings for calico.</p>
 </td>
 </tr>
+<tr>
+<td>
+<code>metalLoadBalancerConfig</code></br>
+<em>
+<a href="#ironcore-metal.provider.extensions.gardener.cloud/v1alpha1.MetalLoadBalancerConfig">
+MetalLoadBalancerConfig
+</a>
+</em>
+</td>
+<td>
+<p>MetalLoadBalancerConfig contains configuration settings for the metal load balancer.</p>
+</td>
+</tr>
 </tbody>
 </table>
 <h3 id="ironcore-metal.provider.extensions.gardener.cloud/v1alpha1.MachineImage">MachineImage
@@ -1032,6 +1045,69 @@ map[string]string
 </em>
 </td>
 <td>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="ironcore-metal.provider.extensions.gardener.cloud/v1alpha1.MetalLoadBalancerConfig">MetalLoadBalancerConfig
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#ironcore-metal.provider.extensions.gardener.cloud/v1alpha1.LoadBalancerConfig">LoadBalancerConfig</a>)
+</p>
+<p>
+<p>MetalLoadBalancerConfig contains configuration settings for the metal load balancer.</p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>nodeCIDRMask</code></br>
+<em>
+int32
+</em>
+</td>
+<td>
+<p>NodeCIDRMask is the mask for the node CIDR.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>allocateNodeCIDRs</code></br>
+<em>
+bool
+</em>
+</td>
+<td>
+<p>AllocateNodeCIDRs enables the allocation of node CIDRs.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>vni</code></br>
+<em>
+int32
+</em>
+</td>
+<td>
+<p>VNI is the VNI used for IP announcements.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>metalBondServer</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>MetalBondServer is the URL of the metal bond server.</p>
 </td>
 </tr>
 </tbody>

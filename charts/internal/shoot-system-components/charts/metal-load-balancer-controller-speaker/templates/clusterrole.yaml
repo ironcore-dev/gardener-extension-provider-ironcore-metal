@@ -1,0 +1,14 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: metal-load-balancer-controller:speaker
+  labels:
+    app.kubernetes.io/name: metal-load-balancer-controller-speaker
+    app.kubernetes.io/instance: metal-load-balancer-controller-speaker
+rules:
+  - apiGroups: [""]
+    resources: ["services"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["services/finalizers"]
+    verbs: ["update"]

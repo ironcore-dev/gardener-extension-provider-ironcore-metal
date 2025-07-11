@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: metal-load-balancer-controller-speaker
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: metal-load-balancer-controller-speaker
+    app.kubernetes.io/instance: metal-load-balancer-controller-speaker
+    app.kubernetes.io/component: speaker
+spec:
+  updateStrategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: metal-load-balancer-controller-speaker
+      app.kubernetes.io/instance: metal-load-balancer-controller-speaker
+      app.kubernetes.io/component: speaker
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: metal-load-balancer-controller-speaker
+        app.kubernetes.io/instance: metal-load-balancer-controller-speaker
+        app.kubernetes.io/component: speaker
+    spec:
+      serviceAccountName: metal-load-balancer-controller-speaker
+      terminationGracePeriodSeconds: 0
+      hostNetwork: true
+      shareProcessNamespace: true
+      containers:
+        - name: speaker
+          image: {{ index .Values.images "metal-load-balancer-controller-speaker" }}
+          args:
+            - --health-probe-bind-address=:8082
+            - --vni={{ .Values.vni }}
+            - --metalbond-server={{ .Values.metalBondServer }}
+            - --node-address=$(NODE_IP)
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /healthz
+              port: 8082
+              scheme: HTTP
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            successThreshold: 1
+            timeoutSeconds: 1
+          readinessProbe:
+              failureThreshold: 3
+              httpGet:
+                path: /readyz
+                port: 8082
+                scheme: HTTP
+              initialDelaySeconds: 5
+              periodSeconds: 10
+              successThreshold: 1
+              timeoutSeconds: 1
+          securityContext:
+            allowPrivilegeEscalation: true
+            capabilities:
+              drop:
+                - ALL

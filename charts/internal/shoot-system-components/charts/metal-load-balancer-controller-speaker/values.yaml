@@ -1,0 +1,4 @@
+vni: 12345
+metalBondServer: localhost:8080
+images:
+  metal-load-balancer-speaker: metal-load-balancer-speaker:latest
