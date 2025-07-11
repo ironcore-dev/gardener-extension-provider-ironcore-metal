@@ -22,6 +22,10 @@ const (
 	MetallbSpeakerImageName = "metallb-speaker"
 	// MetallbControllerImageName is the name of the metallb controller to deploy to the shoot.
 	MetallbControllerImageName = "metallb-controller"
+	// MetalLoadBalancerControllerSpeakerImageName is the name of the metal load balancer controller to deploy to the shoot.
+	MetalLoadBalancerControllerSpeakerImageName = "metal-load-balancer-controller-speaker"
+	// MetalLoadBalancerControllerManagerImageName is the name of the metal load balancer controller manager to deploy to the seed.
+	MetalLoadBalancerControllerManagerImageName = "metal-load-balancer-controller-manager"
 
 	// UsernameFieldName is the field in a secret where the namespace is stored at.
 	UsernameFieldName = "username"
@@ -72,6 +76,10 @@ const (
 	CalicoBgpName = "calico-bgp"
 	// MetallbName is a constant for the name of the MetalLB deployed by the worker controller.
 	MetallbName = "metallb"
+	// MetalLoadBalancerControllerSpeakerName is a constant for the name of the metal load balancer controller.
+	MetalLoadBalancerControllerSpeakerName = "metal-load-balancer-controller-speaker"
+	// MetalLoadBalancerControllerManagerName is a constant for the name of the metal load balancer controller manager.
+	MetalLoadBalancerControllerManagerName = "metal-load-balancer-controller-manager"
 	// MachineControllerManagerName is a constant for the name of the machine-controller-manager.
 	MachineControllerManagerName = "machine-controller-manager"
 	// ShootCalicoNetworkType is the network type for calico in a shoot.

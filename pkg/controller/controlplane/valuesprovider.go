@@ -134,8 +134,31 @@ var (
 					{Type: &corev1.Secret{}, Name: "metallb-webhook-cert"},
 					{Type: &corev1.Service{}, Name: "metallb-webhook-service"},
 					{Type: &corev1.ServiceAccount{}, Name: "metallb-controller"},
-
 					{Type: &corev1.ServiceAccount{}, Name: "metallb-speaker"},
+				},
+			},
+			{
+				Name:   "metal-load-balancer-controller-speaker",
+				Path:   filepath.Join(charts.InternalChartsPath, "metal-load-balancer-controller-speaker"),
+				Images: []string{metal.MetalLoadBalancerControllerSpeakerImageName},
+				Objects: []*chart.Object{
+					{Type: &rbacv1.ClusterRole{}, Name: "metal-load-balancer-controller:speaker"},
+					{Type: &rbacv1.ClusterRoleBinding{}, Name: "metal-load-balancer-controller:speaker"},
+					{Type: &appsv1.DaemonSet{}, Name: "metal-load-balancer-controller-speaker"},
+					{Type: &corev1.ServiceAccount{}, Name: "metal-load-balancer-controller-speaker"},
+				},
+			},
+			{
+				Name:   "metal-load-balancer-controller-manager",
+				Path:   filepath.Join(charts.InternalChartsPath, "metal-load-balancer-controller-manager"),
+				Images: []string{metal.MetalLoadBalancerControllerManagerImageName},
+				Objects: []*chart.Object{
+					{Type: &rbacv1.ClusterRole{}, Name: "metal-load-balancer-controller:manager"},
+					{Type: &rbacv1.ClusterRoleBinding{}, Name: "metal-load-balancer-controller:manager"},
+					{Type: &appsv1.Deployment{}, Name: "metal-load-balancer-controller-manager"},
+					{Type: &rbacv1.Role{}, Name: "metal-load-balancer-controller-manager-leader-election"},
+					{Type: &rbacv1.RoleBinding{}, Name: "metal-load-balancer-controller-manager-leader-election"},
+					{Type: &corev1.ServiceAccount{}, Name: "metal-load-balancer-controller-manager"},
 				},
 			},
 		},
@@ -258,11 +281,31 @@ func getControlPlaneChartValues(
 		return nil, err
 	}
 
+	metalLoadBalancerControllerManager, err := getMetalLoadBalancerControllerManagerChartValues(cpConfig)
+	if err != nil {
+		return nil, err
+	}
+
 	return map[string]any{
 		"global": map[string]any{
 			"genericTokenKubeconfigSecretName": extensionscontroller.GenericTokenKubeconfigSecretNameFromCluster(cluster),
 		},
-		metal.CloudControllerManagerName: ccm,
+		metal.CloudControllerManagerName:             ccm,
+		metal.MetalLoadBalancerControllerManagerName: metalLoadBalancerControllerManager,
+	}, nil
+}
+
+func getMetalLoadBalancerControllerManagerChartValues(config *metalapi.ControlPlaneConfig) (map[string]any, error) {
+	if config.LoadBalancerConfig == nil || config.LoadBalancerConfig.MetalLoadBalancerConfig == nil {
+		return map[string]any{
+			"enabled": false,
+		}, nil
+	}
+
+	return map[string]any{
+		"enabled":           true,
+		"nodeCIDRMask":      config.LoadBalancerConfig.MetalLoadBalancerConfig.NodeCIDRMask,
+		"allocateNodeCIDRs": config.LoadBalancerConfig.MetalLoadBalancerConfig.AllocateNodeCIDRs,
 	}, nil
 }
 
@@ -359,10 +402,31 @@ func (vp *valuesProvider) getControlPlaneShootChartValues(cluster *extensionscon
 		return nil, err
 	}
 
+	metalLoadBalancerControllerSpeaker, err := getMetalLoadBalancerControllerSpeakerChartValues(cp)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get metal load balancer controller chart values: %w", err)
+	}
+
 	return map[string]any{
-		metal.CloudControllerManagerName: map[string]any{"enabled": true},
-		metal.MetallbName:                metallb,
-		metal.CalicoBgpName:              calicoBgp,
+		metal.CloudControllerManagerName:             map[string]any{"enabled": true},
+		metal.MetallbName:                            metallb,
+		metal.CalicoBgpName:                          calicoBgp,
+		metal.MetalLoadBalancerControllerSpeakerName: metalLoadBalancerControllerSpeaker,
+	}, nil
+}
+
+// getMetalLoadBalancerControllerSpeakerChartValues collects and returns the Metal Load Balancer Controller chart values.
+func getMetalLoadBalancerControllerSpeakerChartValues(cpConfig *metalapi.ControlPlaneConfig) (map[string]any, error) {
+	if cpConfig.LoadBalancerConfig == nil || cpConfig.LoadBalancerConfig.MetalLoadBalancerConfig == nil {
+		return map[string]any{
+			"enabled": false,
+		}, nil
+	}
+
+	return map[string]any{
+		"enabled":         true,
+		"vni":             cpConfig.LoadBalancerConfig.MetalLoadBalancerConfig.VNI,
+		"metalBondServer": cpConfig.LoadBalancerConfig.MetalLoadBalancerConfig.MetalBondServer,
 	}, nil
 }
 
@@ -392,9 +456,7 @@ func (vp *valuesProvider) getConfigChartValues(cluster *extensionscontroller.Clu
 }
 
 // getMetallbChartValues collects and returns the MetalLB chart values.
-func getMetallbChartValues(
-	cpConfig *metalapi.ControlPlaneConfig,
-) (map[string]any, error) {
+func getMetallbChartValues(cpConfig *metalapi.ControlPlaneConfig) (map[string]any, error) {
 	if cpConfig.LoadBalancerConfig == nil || cpConfig.LoadBalancerConfig.MetallbConfig == nil {
 		return map[string]any{
 			"enabled": false,

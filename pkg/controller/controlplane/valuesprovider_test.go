@@ -237,6 +237,14 @@ var _ = Describe("Valueprovider Reconcile", func() {
 										"CustomResourceValidation": true,
 									},
 								},
+								LoadBalancerConfig: &apismetal.LoadBalancerConfig{
+									MetalLoadBalancerConfig: &apismetal.MetalLoadBalancerConfig{
+										NodeCIDRMask:      80,
+										AllocateNodeCIDRs: true,
+										VNI:               12345,
+										MetalBondServer:   "localhost:8080",
+									},
+								},
 							}),
 						},
 					},
@@ -298,6 +306,11 @@ var _ = Describe("Valueprovider Reconcile", func() {
 			Expect(values).To(Equal(map[string]any{
 				"global": map[string]any{
 					"genericTokenKubeconfigSecretName": "generic-token-kubeconfig",
+				},
+				"metal-load-balancer-controller-manager": map[string]any{
+					"enabled":           true,
+					"nodeCIDRMask":      int32(80),
+					"allocateNodeCIDRs": true,
 				},
 				"cloud-controller-manager": map[string]any{
 					"enabled":     true,
@@ -417,6 +430,9 @@ var _ = Describe("Valueprovider Reconcile", func() {
 						"enabled": false,
 					},
 				},
+				"metal-load-balancer-controller-speaker": map[string]any{
+					"enabled": false,
+				},
 			}))
 		})
 	})
@@ -514,6 +530,83 @@ var _ = Describe("Valueprovider Reconcile", func() {
 					"bgp": map[string]any{
 						"enabled": false,
 					},
+				},
+				"metal-load-balancer-controller-speaker": map[string]any{
+					"enabled": false,
+				},
+			}))
+		})
+	})
+
+	Describe("#GetControlPlaneShootChartValues", func() {
+		It("should return correct shoot system chart values with metal-load-balancer-controller", func(ctx SpecContext) {
+			cp := &extensionsv1alpha1.ControlPlane{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "control-plane",
+					Namespace: ns.Name,
+				},
+				Spec: extensionsv1alpha1.ControlPlaneSpec{
+					Region: "foo",
+					SecretRef: corev1.SecretReference{
+						Name:      "my-infra-creds",
+						Namespace: ns.Name,
+					},
+					DefaultSpec: extensionsv1alpha1.DefaultSpec{
+						Type: metal.Type,
+						ProviderConfig: &runtime.RawExtension{
+							Raw: encode(&apismetal.ControlPlaneConfig{
+								CloudControllerManager: &apismetal.CloudControllerManagerConfig{
+									FeatureGates: map[string]bool{
+										"CustomResourceValidation": true,
+									},
+								},
+								LoadBalancerConfig: &apismetal.LoadBalancerConfig{
+									MetalLoadBalancerConfig: &apismetal.MetalLoadBalancerConfig{
+										VNI:             80,
+										MetalBondServer: "localhost:8080",
+									},
+								},
+							}),
+						},
+					},
+				},
+			}
+			Expect(k8sClient.Create(ctx, cp)).To(Succeed())
+
+			cluster := &controller.Cluster{
+				Shoot: &gardencorev1beta1.Shoot{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: ns.Name,
+						Name:      "my-shoot",
+					},
+					Spec: gardencorev1beta1.ShootSpec{
+						Kubernetes: gardencorev1beta1.Kubernetes{
+							Version: "1.26.0",
+							VerticalPodAutoscaler: &gardencorev1beta1.VerticalPodAutoscaler{
+								Enabled: true,
+							},
+						},
+					},
+				},
+			}
+
+			values, err := vp.GetControlPlaneShootChartValues(ctx, cp, cluster, fakeSecretsManager, nil)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(values).To(Equal(map[string]any{
+				"cloud-controller-manager": map[string]any{"enabled": true},
+				"metallb": map[string]any{
+					"enabled": false,
+				},
+				"calico-bgp": map[string]any{
+					"enabled": false,
+					"bgp": map[string]any{
+						"enabled": false,
+					},
+				},
+				"metal-load-balancer-controller-speaker": map[string]any{
+					"enabled":         true,
+					"vni":             int32(80),
+					"metalBondServer": "localhost:8080",
 				},
 			}))
 		})
@@ -639,6 +732,9 @@ var _ = Describe("Valueprovider Reconcile", func() {
 							},
 						},
 					},
+				},
+				"metal-load-balancer-controller-speaker": map[string]any{
+					"enabled": false,
 				},
 			}))
 		})
@@ -781,6 +877,9 @@ var _ = Describe("Valueprovider Reconcile", func() {
 			Expect(values).To(Equal(map[string]any{
 				"cloud-controller-manager": map[string]any{"enabled": true},
 				"metallb": map[string]any{
+					"enabled": false,
+				},
+				"metal-load-balancer-controller-speaker": map[string]any{
 					"enabled": false,
 				},
 				"calico-bgp": map[string]any{

@@ -36,3 +36,13 @@ images:
   sourceRepository: https://github.com/metallb/metallb
   repository: quay.io/metallb/controller
   tag: "v0.14.8"
+
+- name: metal-load-balancer-controller-manager
+  sourceRepository: https://github.com/ironcore-dev/metal-load-balancer-controller
+  repository: ghcr.io/ironcore-dev/metal-load-balancer-controller
+  tag: "v0.1.0"
+
+- name: metal-load-balancer-controller-speaker
+  sourceRepository: https://github.com/ironcore-dev/metal-load-balancer-controller
+  repository: ghcr.io/ironcore-dev/metalbond-speaker
+  tag: "v0.1.0"

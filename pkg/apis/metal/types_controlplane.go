@@ -68,6 +68,21 @@ type LoadBalancerConfig struct {
 
 	// CalicoBgpConfig contains configuration settings for calico.
 	CalicoBgpConfig *CalicoBgpConfig
+
+	// MetalLoadBalancerConfig contains configuration settings for the metal load balancer.
+	MetalLoadBalancerConfig *MetalLoadBalancerConfig
+}
+
+// MetalLoadBalancerConfig contains configuration settings for the metal load balancer.
+type MetalLoadBalancerConfig struct { // nolint:revive
+	// NodeCIDRMask is the mask for the node CIDR.
+	NodeCIDRMask int32
+	// AllocateNodeCIDRs enables the allocation of node CIDRs.
+	AllocateNodeCIDRs bool
+	// VNI is the VNI used for IP announcements.
+	VNI int32 `json:"vni"`
+	// MetalBondServer is the URL of the metal bond server.
+	MetalBondServer string
 }
 
 // MetallbConfig contains configuration settings for metallb.

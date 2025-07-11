@@ -1,0 +1,4 @@
+apiVersion: v1
+description: Helm chart for metal-load-balancer-controller-speaker
+name: metal-load-balancer-controller-speaker
+version: 0.1.0
