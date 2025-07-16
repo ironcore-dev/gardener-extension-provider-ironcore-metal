@@ -15,10 +15,12 @@ rules:
       - get
       - list
       - watch
+      - patch
   - apiGroups:
       - ""
     resources:
       - services/finalizers
     verbs:
       - update
+      - patch
 {{- end }}
