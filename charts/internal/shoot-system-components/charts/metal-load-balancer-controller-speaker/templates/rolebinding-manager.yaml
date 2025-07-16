@@ -10,7 +10,7 @@ metadata:
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: metal-load-balancer-controller-manager-leader-election-role
+  name: metal-load-balancer-controller-manager-leader-election
 subjects:
   - kind: ServiceAccount
     name: metal-load-balancer-controller-manager
