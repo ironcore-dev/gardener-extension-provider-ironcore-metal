@@ -31,7 +31,7 @@ spec:
         runAsNonRoot: true
         runAsUser: 65534
       containers:
-        - name: controller
+        - name: metal-load-balancer-controller-manager
           image: {{ index .Values.images "metal-load-balancer-controller-manager" }}
           args:
             - --kubeconfig=/var/run/secrets/gardener.cloud/shoot/generic-kubeconfig/kubeconfig
