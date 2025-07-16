@@ -158,6 +158,8 @@ var (
 					{Type: &corev1.ServiceAccount{}, Name: "metal-load-balancer-controller-speaker"},
 					{Type: &rbacv1.ClusterRole{}, Name: "metal-load-balancer-controller:manager"},
 					{Type: &rbacv1.ClusterRoleBinding{}, Name: "metal-load-balancer-controller:manager"},
+					{Type: &rbacv1.Role{}, Name: "metal-load-balancer-controller-manager-leader-election"},
+					{Type: &rbacv1.RoleBinding{}, Name: "metal-load-balancer-controller-manager-leader-election"},
 				},
 			},
 		},
