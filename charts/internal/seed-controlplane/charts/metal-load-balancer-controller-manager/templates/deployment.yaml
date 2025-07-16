@@ -35,16 +35,12 @@ spec:
           image: {{ index .Values.images "metal-load-balancer-controller-manager" }}
           args:
             - --kubeconfig=/var/run/secrets/gardener.cloud/shoot/generic-kubeconfig/kubeconfig
-            - --authentication-kubeconfig=/var/run/secrets/gardener.cloud/shoot/generic-kubeconfig/kubeconfig
-            - --authorization-kubeconfig=/var/run/secrets/gardener.cloud/shoot/generic-kubeconfig/kubeconfig
-            - --leader-election
+            - --leader-election=true
             - --leader-election-namespace=kube-system
             - --health-probe-bind-address=:8083
             - --metrics-bind-address=:8084
             - --allocate-node-cidr={{ .Values.allocateNodeCIDRs }}
             - --node-cidr-mask-size={{ .Values.nodeCIDRMask }}
-            - --use-service-account-credentials
-            - --v=2
           livenessProbe:
             failureThreshold: 3
             httpGet:
