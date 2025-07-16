@@ -39,9 +39,10 @@ import (
 )
 
 const (
-	caNameControlPlane                   = "ca-" + metal.ProviderName + "-controlplane"
-	cloudControllerManagerDeploymentName = "cloud-controller-manager"
-	cloudControllerManagerServerName     = "cloud-controller-manager-server"
+	caNameControlPlane                        = "ca-" + metal.ProviderName + "-controlplane"
+	cloudControllerManagerDeploymentName      = "cloud-controller-manager"
+	cloudControllerManagerServerName          = "cloud-controller-manager-server"
+	metalLoadBalancerControllerDeploymentName = "metal-load-balancer-controller-manager"
 )
 
 func secretConfigsFunc(namespace string) []extensionssecretsmanager.SecretConfigWithOptions {
@@ -70,6 +71,7 @@ func secretConfigsFunc(namespace string) []extensionssecretsmanager.SecretConfig
 func shootAccessSecretsFunc(namespace string) []*gutil.AccessSecret {
 	return []*gutil.AccessSecret{
 		gutil.NewShootAccessSecret(cloudControllerManagerDeploymentName, namespace),
+		gutil.NewShootAccessSecret(metalLoadBalancerControllerDeploymentName, namespace),
 	}
 }
 
@@ -146,6 +148,8 @@ var (
 					{Type: &rbacv1.ClusterRoleBinding{}, Name: "metal-load-balancer-controller:speaker"},
 					{Type: &appsv1.DaemonSet{}, Name: "metal-load-balancer-controller-speaker"},
 					{Type: &corev1.ServiceAccount{}, Name: "metal-load-balancer-controller-speaker"},
+					{Type: &rbacv1.ClusterRole{}, Name: "metal-load-balancer-controller:manager"},
+					{Type: &rbacv1.ClusterRoleBinding{}, Name: "metal-load-balancer-controller:manager"},
 				},
 			},
 			{
@@ -153,12 +157,7 @@ var (
 				Path:   filepath.Join(charts.InternalChartsPath, "metal-load-balancer-controller-manager"),
 				Images: []string{metal.MetalLoadBalancerControllerManagerImageName},
 				Objects: []*chart.Object{
-					{Type: &rbacv1.ClusterRole{}, Name: "metal-load-balancer-controller:manager"},
-					{Type: &rbacv1.ClusterRoleBinding{}, Name: "metal-load-balancer-controller:manager"},
 					{Type: &appsv1.Deployment{}, Name: "metal-load-balancer-controller-manager"},
-					{Type: &rbacv1.Role{}, Name: "metal-load-balancer-controller-manager-leader-election"},
-					{Type: &rbacv1.RoleBinding{}, Name: "metal-load-balancer-controller-manager-leader-election"},
-					{Type: &corev1.ServiceAccount{}, Name: "metal-load-balancer-controller-manager"},
 				},
 			},
 		},

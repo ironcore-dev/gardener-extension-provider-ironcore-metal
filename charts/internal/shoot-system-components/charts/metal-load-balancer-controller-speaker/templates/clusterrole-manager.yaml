@@ -1,8 +1,8 @@
+{{- if .Values.enabled }}
 apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
+kind: ClusterRole
 metadata:
-  name: metal-load-balancer-controller-manager-leader-election
-  namespace: {{ .Release.Namespace }}
+  name: metal-load-balancer-controller:manager
   labels:
     app.kubernetes.io/name: metal-load-balancer-controller-manager
     app.kubernetes.io/instance: metal-load-balancer-controller-manager
@@ -10,24 +10,28 @@ rules:
   - apiGroups:
       - ""
     resources:
-      - configmaps
+    - services
     verbs:
       - get
       - list
       - watch
-      - create
-      - update
       - patch
-      - delete
+      - update
   - apiGroups:
-      - coordination.k8s.io
+      - ""
     resources:
-      - leases
+      - nodes
     verbs:
       - get
       - list
       - watch
-      - create
+      - patch
+      - update
+  - apiGroups:
+      - ""
+    resources:
+      - services/status
+    verbs:
       - update
       - patch
-      - delete
+{{- end }}

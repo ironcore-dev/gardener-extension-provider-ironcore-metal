@@ -1,28 +1,30 @@
+{{- if .Values.enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: metal-load-balancer-controller-manager
   namespace: {{ .Release.Namespace }}
   labels:
-    app.kubernetes.io/name: metal-load-balancer-controller-manager
-    app.kubernetes.io/instance: metal-load-balancer-controller-manager
-    app.kubernetes.io/component: controller
+    app: kubernetes
+    role: metal-load-balancer-controller-manager
+    high-availability-config.resources.gardener.cloud/type: controller
 spec:
   strategy:
     type: RollingUpdate
   selector:
     matchLabels:
-      app.kubernetes.io/name: metal-load-balancer-controller-manager
-      app.kubernetes.io/instance: metal-load-balancer-controller-manager
-      app.kubernetes.io/component: controller
+      app: kubernetes
+      role: metal-load-balancer-controller-manager
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: metal-load-balancer-controller-manager
-        app.kubernetes.io/instance: metal-load-balancer-controller-manager
-        app.kubernetes.io/component: controller
+        gardener.cloud/role: controlplane
+        app: kubernetes
+        role: metal-load-balancer-controller-manager
+        networking.resources.gardener.cloud/to-kube-apiserver-tcp-443: allowed
     spec:
-      serviceAccountName: metal-load-balancer-controller-manager
+      automountServiceAccountToken: false
+      priorityClassName: gardener-system-300
       terminationGracePeriodSeconds: 0
       securityContext:
         fsGroup: 65534
@@ -32,11 +34,17 @@ spec:
         - name: controller
           image: {{ index .Values.images "metal-load-balancer-controller-manager" }}
           args:
-            - --leader-elect
+            - --kubeconfig=/var/run/secrets/gardener.cloud/shoot/generic-kubeconfig/kubeconfig
+            - --authentication-kubeconfig=/var/run/secrets/gardener.cloud/shoot/generic-kubeconfig/kubeconfig
+            - --authorization-kubeconfig=/var/run/secrets/gardener.cloud/shoot/generic-kubeconfig/kubeconfig
+            - --leader-election
+            - --leader-election-namespace=kube-system
             - --health-probe-bind-address=:8083
             - --metrics-bind-address=:8084
             - --allocate-node-cidr={{ .Values.allocateNodeCIDRs }}
             - --node-cidr-mask-size={{ .Values.nodeCIDRMask }}
+            - --use-service-account-credentials
+            - --v=2
           livenessProbe:
             failureThreshold: 3
             httpGet:
@@ -62,3 +70,25 @@ spec:
             capabilities:
               drop:
                 - ALL
+          volumeMounts:
+            - mountPath: /var/run/secrets/gardener.cloud/shoot/generic-kubeconfig
+              name: kubeconfig
+              readOnly: true
+      volumes:
+        - name: kubeconfig
+          projected:
+            defaultMode: 420
+            sources:
+              - secret:
+                  items:
+                    - key: kubeconfig
+                      path: kubeconfig
+                  name: {{ .Values.global.genericTokenKubeconfigSecretName }}
+                  optional: false
+              - secret:
+                  items:
+                    - key: token
+                      path: token
+                  name: shoot-access-metal-load-balancer-controller-manager
+                  optional: false
+{{- end }}

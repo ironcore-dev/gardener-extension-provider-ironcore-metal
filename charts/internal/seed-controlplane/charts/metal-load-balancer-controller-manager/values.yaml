@@ -2,3 +2,4 @@ nodeCIDRMask: 64
 allocateNodeCIDRs: false
 images:
   metal-load-balancer-controller: image-repository:image-tag
+enabled: false
