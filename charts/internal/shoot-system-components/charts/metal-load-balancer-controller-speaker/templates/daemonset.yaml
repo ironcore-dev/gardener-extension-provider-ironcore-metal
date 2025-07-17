@@ -35,6 +35,11 @@ spec:
             - --vni={{ .Values.vni }}
             - --metalbond-server={{ .Values.metalBondServer }}
             - --node-address=$(NODE_IP)
+          env:
+            - name: NODE_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
           livenessProbe:
             failureThreshold: 3
             httpGet:
