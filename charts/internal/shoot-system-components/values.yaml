@@ -6,3 +6,6 @@ metallb:
 
 calico-bgp:
   enabled: false
+
+metal-load-balancer-controller-speaker:
+  enabled: false

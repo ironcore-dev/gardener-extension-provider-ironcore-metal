@@ -3,3 +3,6 @@ global:
 
 cloud-controller-manager:
   enabled: true
+
+metal-load-balancer-controller-manager:
+  enabled: false
