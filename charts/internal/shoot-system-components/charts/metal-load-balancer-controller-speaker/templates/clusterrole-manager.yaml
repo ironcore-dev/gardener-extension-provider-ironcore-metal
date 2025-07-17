@@ -3,9 +3,6 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   name: metal-load-balancer-controller:manager
-  labels:
-    app.kubernetes.io/name: metal-load-balancer-controller-manager
-    app.kubernetes.io/instance: metal-load-balancer-controller-manager
 rules:
   - apiGroups:
       - ""

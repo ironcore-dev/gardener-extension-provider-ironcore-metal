@@ -4,9 +4,6 @@ kind: Role
 metadata:
   name: metal-load-balancer-controller-manager-leader-election
   namespace: kube-system
-  labels:
-    app.kubernetes.io/name: metal-load-balancer-controller-manager
-    app.kubernetes.io/instance: metal-load-balancer-controller-manager
 rules:
   - apiGroups:
       - ""
