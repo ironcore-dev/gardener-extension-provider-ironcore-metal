@@ -6,10 +6,10 @@ package validation
 import (
 	"fmt"
 
-	"github.com/gardener/gardener/extensions/pkg/util"
 	gardenercore "github.com/gardener/gardener/pkg/apis/core"
 	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
 	"github.com/gardener/gardener/pkg/utils"
+	gutil "github.com/gardener/gardener/pkg/utils/gardener"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/utils/ptr"
 	"k8s.io/utils/strings/slices"
@@ -61,8 +61,8 @@ func ValidateProviderMachineImage(validationPath *field.Path, machineImage apism
 }
 
 // NewProviderImagesContext creates a new ImagesContext for provider images.
-func NewProviderImagesContext(providerImages []apismetal.MachineImages) *util.ImagesContext[apismetal.MachineImages, apismetal.MachineImageVersion] {
-	return util.NewImagesContext(
+func NewProviderImagesContext(providerImages []apismetal.MachineImages) *gutil.ImagesContext[apismetal.MachineImages, apismetal.MachineImageVersion] {
+	return gutil.NewImagesContext(
 		utils.CreateMapFromSlice(providerImages, func(mi apismetal.MachineImages) string { return mi.Name }),
 		func(mi apismetal.MachineImages) map[string]apismetal.MachineImageVersion {
 			return utils.CreateMapFromSlice(mi.Versions, func(v apismetal.MachineImageVersion) string { return providerMachineImageKey(v) })

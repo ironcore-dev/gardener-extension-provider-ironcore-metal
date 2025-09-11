@@ -233,7 +233,7 @@ func (w *workerDelegate) generateMachineClassAndSecrets(ctx context.Context) ([]
 
 func (w *workerDelegate) generateHashForWorkerPool(pool v1alpha1.WorkerPool) (string, error) {
 	// Generate the worker pool hash.
-	return worker.WorkerPoolHash(pool, w.cluster, nil, nil)
+	return worker.WorkerPoolHash(pool, w.cluster, nil, nil, nil)
 }
 
 func (w *workerDelegate) getServerLabelsForMachine(machineType string, workerConfig *metalv1alpha1.WorkerConfig) (map[string]string, error) {
