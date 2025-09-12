@@ -77,7 +77,7 @@ func (e *ensurer) EnsureMachineControllerManagerDeployment(ctx context.Context, 
 
 	ps.Containers = extensionswebhook.EnsureContainerWithName(
 		newObj.Spec.Template.Spec.Containers,
-		machinecontrollermanager.ProviderSidecarContainer(newObj.Namespace, metal.ProviderName, image.String()),
+		machinecontrollermanager.ProviderSidecarContainer(cluster.Shoot, newObj.Namespace, metal.ProviderName, image.String()),
 	)
 
 	if c := extensionswebhook.ContainerWithName(ps.Containers, metal.MachineControllerManagerProviderIroncoreImageName); c != nil {
