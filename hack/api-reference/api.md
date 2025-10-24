@@ -363,7 +363,7 @@ string
 </h3>
 <p>
 (<em>Appears on:</em>
-<a href="#ironcore-metal.provider.extensions.gardener.cloud/v1alpha1.LoadBalancerConfig">LoadBalancerConfig</a>)
+<a href="#ironcore-metal.provider.extensions.gardener.cloud/v1alpha1.CalicoConfig">CalicoConfig</a>)
 </p>
 <p>
 <p>CalicoBgpConfig contains BGP configuration settings for calico.</p>
@@ -461,6 +461,122 @@ bool
 <td>
 <em>(Optional)</em>
 <p>BGPFilter contains configuration for BGPFilter resource.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="ironcore-metal.provider.extensions.gardener.cloud/v1alpha1.CalicoConfig">CalicoConfig
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#ironcore-metal.provider.extensions.gardener.cloud/v1alpha1.LoadBalancerConfig">LoadBalancerConfig</a>)
+</p>
+<p>
+<p>CalicoConfig contains configuration settings for Calico.</p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>calicoBgpConfig</code></br>
+<em>
+<a href="#ironcore-metal.provider.extensions.gardener.cloud/v1alpha1.CalicoBgpConfig">
+CalicoBgpConfig
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>CalicoBgpConfig contains BGP configuration settings for calico.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>IPPools</code></br>
+<em>
+<a href="#ironcore-metal.provider.extensions.gardener.cloud/v1alpha1.CalicoIPPool">
+[]CalicoIPPool
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>CalicoIPPools are the CIDR blocks for LoadBalancer IPs.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="ironcore-metal.provider.extensions.gardener.cloud/v1alpha1.CalicoIPPool">CalicoIPPool
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#ironcore-metal.provider.extensions.gardener.cloud/v1alpha1.CalicoConfig">CalicoConfig</a>)
+</p>
+<p>
+<p>CalicoIPPool contains configuration for a Calico IP pool.</p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>allowedUses</code></br>
+<em>
+[]string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>AllowedUse controls what the IP pool will be used for.
+&ldquo;Tunnel&rdquo;, &ldquo;Workload&rdquo; or &ldquo;LoadBalancer&rdquo;. Default is &ldquo;LoadBalancer&rdquo;.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>assignmentMode</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>Determines the mode how IP addresses should be assigned from this pool.
+&ldquo;Automatic&rdquo; or &ldquo;Manual&rdquo;. Default is &ldquo;Automatic&rdquo;.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>cidr</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>CIDR is the CIDR block for the IP pool.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>Disabled</code></br>
+<em>
+bool
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>When disabled is true, Calico IPAM will not assign addresses from this pool.
+Default is false.</p>
 </td>
 </tr>
 </tbody>
@@ -824,16 +940,16 @@ MetallbConfig
 </tr>
 <tr>
 <td>
-<code>calicoBgpConfig</code></br>
+<code>calicoConfig</code></br>
 <em>
-<a href="#ironcore-metal.provider.extensions.gardener.cloud/v1alpha1.CalicoBgpConfig">
-CalicoBgpConfig
+<a href="#ironcore-metal.provider.extensions.gardener.cloud/v1alpha1.CalicoConfig">
+CalicoConfig
 </a>
 </em>
 </td>
 <td>
 <em>(Optional)</em>
-<p>CalicoBgpConfig contains configuration settings for calico.</p>
+<p>CalicoConfig contains configuration settings for calico.</p>
 </td>
 </tr>
 <tr>

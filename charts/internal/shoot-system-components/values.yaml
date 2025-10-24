@@ -7,5 +7,8 @@ metallb:
 calico-bgp:
   enabled: false
 
+calico-ipam:
+  enabled: false
+
 metal-load-balancer-controller-speaker:
   enabled: false

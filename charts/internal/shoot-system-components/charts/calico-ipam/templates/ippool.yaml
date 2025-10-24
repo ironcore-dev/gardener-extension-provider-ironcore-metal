@@ -1,0 +1,18 @@
+{{- if .Values.ipam.enabled }}
+{{- range $pool := .Values.ipam.pools }}
+---
+apiVersion: crd.projectcalico.org/v1
+kind: IPPool
+metadata:
+  name: ippool-{{ $pool.cidr | replace "/" "-" | replace "." "-" | replace ":" "-" }}
+spec:
+  cidr: {{ $pool.cidr }}
+  natOutgoing: true
+  disabled: {{ $pool.disabled }}
+  assignmentMode: {{ $pool.assignmentMode }}
+  allowedUses:
+    {{- range $use := $pool.allowedUses }}
+    - {{ $use }}
+    {{- end }}
+{{- end }}
+{{- end }}

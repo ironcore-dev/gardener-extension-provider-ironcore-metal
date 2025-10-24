@@ -73,9 +73,9 @@ type LoadBalancerConfig struct {
 	// +optional
 	MetallbConfig *MetallbConfig `json:"metallbConfig,omitempty"`
 
-	// CalicoBgpConfig contains configuration settings for calico.
+	// CalicoConfig contains configuration settings for calico.
 	// +optional
-	CalicoBgpConfig *CalicoBgpConfig `json:"calicoBgpConfig,omitempty"`
+	CalicoConfig *CalicoConfig `json:"calicoConfig,omitempty"`
 
 	// MetalLoadBalancerConfig contains configuration settings for the metal load balancer.
 	MetalLoadBalancerConfig *MetalLoadBalancerConfig `json:"metalLoadBalancerConfig,omitempty"`
@@ -106,6 +106,38 @@ type MetallbConfig struct {
 	// EnableL2Advertisement enables L2 advertisement.
 	// +optional
 	EnableL2Advertisement bool `json:"enableL2Advertisement,omitempty"`
+}
+
+// CalicoConfig contains configuration settings for Calico.
+type CalicoConfig struct {
+	// CalicoBgpConfig contains BGP configuration settings for calico.
+	// +optional
+	CalicoBgpConfig *CalicoBgpConfig `json:"calicoBgpConfig,omitempty"`
+
+	// CalicoIPPools are the CIDR blocks for LoadBalancer IPs.
+	// +optional
+	CalicoIPPools []CalicoIPPool `json:"IPPools,omitempty"`
+}
+
+// CalicoIPPool contains configuration for a Calico IP pool.
+type CalicoIPPool struct {
+	// AllowedUse controls what the IP pool will be used for.
+	// "Tunnel", "Workload" or "LoadBalancer". Default is "LoadBalancer".
+	// +optional
+	AllowedUses []string `json:"allowedUses,omitempty"`
+
+	// Determines the mode how IP addresses should be assigned from this pool.
+	// "Automatic" or "Manual". Default is "Automatic".
+	// +optional
+	AssignmentMode string `json:"assignmentMode,omitempty"`
+
+	// CIDR is the CIDR block for the IP pool.
+	CIDR string `json:"cidr"`
+
+	// When disabled is true, Calico IPAM will not assign addresses from this pool.
+	// Default is false.
+	// +optional
+	Disabled bool
 }
 
 // CalicoBgpConfig contains BGP configuration settings for calico.
