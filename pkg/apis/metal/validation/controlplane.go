@@ -30,3 +30,7 @@ func ValidateControlPlaneConfigUpdate(oldConfig, newConfig *apismetal.ControlPla
 
 	return allErrs
 }
+
+func ValidateCalicoIPPoolAssignmentMode(mode apismetal.CalicoIPPoolAssignmentMode) bool {
+	return mode == metal.CalicoIPPoolAssignmentModeAutomatic || mode == metal.CalicoIPPoolAssignmentModeManual
+}

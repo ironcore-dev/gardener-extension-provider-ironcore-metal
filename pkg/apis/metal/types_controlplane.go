@@ -66,8 +66,8 @@ type LoadBalancerConfig struct {
 	// MetallbConfig contains configuration settings for metallb.
 	MetallbConfig *MetallbConfig
 
-	// CalicoBgpConfig contains configuration settings for calico.
-	CalicoBgpConfig *CalicoBgpConfig
+	// CalicoConfig contains configuration settings for calico.
+	CalicoConfig *CalicoConfig
 
 	// MetalLoadBalancerConfig contains configuration settings for the metal load balancer.
 	MetalLoadBalancerConfig *MetalLoadBalancerConfig
@@ -96,6 +96,33 @@ type MetallbConfig struct {
 	// EnableL2Advertisement enables L2 advertisement.
 	EnableL2Advertisement bool
 }
+
+// CalicoConfig contains configuration settings for Calico.
+type CalicoConfig struct {
+	// CalicoBgpConfig contains BGP configuration settings for calico.
+	CalicoBgpConfig *CalicoBgpConfig
+
+	// CalicoIPPools are the CIDR blocks for LoadBalancer IPs.
+	CalicoIPPools []CalicoIPPool
+}
+
+// CalicoIPPool contains configuration for a Calico IP pool.
+type CalicoIPPool struct {
+	// AllowedUse controls what the IP pool will be used for.
+	// Must be "Tunnel", "Workload" or "LoadBalancer"
+	AllowedUses []string
+
+	// Determines the mode how IP addresses should be assigned from this pool.
+	AssignmentMode string
+
+	// CIDR is the CIDR block for the IP pool.
+	CIDR string
+
+	// When disabled is true, Calico IPAM will not assign addresses from this pool.
+	Disabled bool
+}
+
+type CalicoIPPoolAssignmentMode string
 
 // CalicoBgpConfig contains BGP configuration settings for calico.
 type CalicoBgpConfig struct {

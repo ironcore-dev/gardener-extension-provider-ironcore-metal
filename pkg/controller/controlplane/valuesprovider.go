@@ -34,6 +34,7 @@ import (
 
 	"github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/charts"
 	metalapi "github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/apis/metal"
+	"github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/apis/metal/validation"
 	"github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/internal"
 	"github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/metal"
 )
@@ -398,6 +399,11 @@ func (vp *valuesProvider) getControlPlaneShootChartValues(cluster *extensionscon
 		return nil, err
 	}
 
+	calicoIPPools, err := getCalicoIPPoolChartValues(cp, cluster)
+	if err != nil {
+		return nil, err
+	}
+
 	calicoBgp, err := getCalicoBgpChartValues(cp, cluster)
 	if err != nil {
 		return nil, err
@@ -411,6 +417,7 @@ func (vp *valuesProvider) getControlPlaneShootChartValues(cluster *extensionscon
 	return map[string]any{
 		metal.CloudControllerManagerName:             map[string]any{"enabled": true},
 		metal.MetallbName:                            metallb,
+		metal.CalicoIPPoolName:                       calicoIPPools,
 		metal.CalicoBgpName:                          calicoBgp,
 		metal.MetalLoadBalancerControllerSpeakerName: metalLoadBalancerControllerSpeaker,
 	}, nil
@@ -482,12 +489,53 @@ func getMetallbChartValues(cpConfig *metalapi.ControlPlaneConfig) (map[string]an
 	}, nil
 }
 
+// getCalicoIPPoolChartValues collects and returns the Calico IPAM chart values.
+func getCalicoIPPoolChartValues(
+	cpConfig *metalapi.ControlPlaneConfig,
+	cluster *extensionscontroller.Cluster,
+) (map[string]any, error) {
+	if cpConfig.LoadBalancerConfig == nil || cpConfig.LoadBalancerConfig.CalicoConfig == nil || cpConfig.LoadBalancerConfig.CalicoConfig.CalicoIPPools == nil {
+		return map[string]any{
+			"enabled": false,
+		}, nil
+	}
+	var pools []map[string]any
+	if cpConfig.LoadBalancerConfig.CalicoConfig == nil || cpConfig.LoadBalancerConfig.CalicoConfig.CalicoIPPools != nil &&
+		*cluster.Shoot.Spec.Networking.Type == metal.ShootCalicoNetworkType {
+		for _, pool := range cpConfig.LoadBalancerConfig.CalicoConfig.CalicoIPPools {
+			if err := parseAddressPool(pool.CIDR); err != nil {
+				return nil, fmt.Errorf("invalid CIDR %q in pool: %w", pool.CIDR, err)
+			}
+			if pool.AssignmentMode == "" {
+				pool.AssignmentMode = metal.CalicoIPPoolAssignmentModeAutomatic
+			} else if !validation.ValidateCalicoIPPoolAssignmentMode(metalapi.CalicoIPPoolAssignmentMode(pool.AssignmentMode)) {
+				return nil, fmt.Errorf("invalid AssignmentMode %s, must be %s or %s", pool.AssignmentMode, metal.CalicoIPPoolAssignmentModeAutomatic, metal.CalicoIPPoolAssignmentModeManual)
+			}
+			if pool.AllowedUses == nil {
+				pool.AllowedUses = make([]string, 0)
+				pool.AllowedUses = append(pool.AllowedUses, "LoadBalancer")
+			}
+			poolMap := map[string]any{
+				"allowedUses":    pool.AllowedUses,
+				"assignmentMode": pool.AssignmentMode,
+				"cidr":           pool.CIDR,
+				"disabled":       pool.Disabled,
+			}
+			pools = append(pools, poolMap)
+		}
+	}
+	return map[string]any{
+		"enabled": true,
+		"pools":   pools,
+	}, nil
+}
+
 // getCalicoBgpChartValues collects and returns the Calico BGP chart values.
 func getCalicoBgpChartValues(
 	cpConfig *metalapi.ControlPlaneConfig,
 	cluster *extensionscontroller.Cluster,
 ) (map[string]any, error) {
-	if cpConfig.LoadBalancerConfig == nil || cpConfig.LoadBalancerConfig.CalicoBgpConfig == nil {
+	if cpConfig.LoadBalancerConfig == nil || cpConfig.LoadBalancerConfig.CalicoConfig == nil || cpConfig.LoadBalancerConfig.CalicoConfig.CalicoBgpConfig == nil {
 		return map[string]any{
 			"enabled": false,
 			"bgp": map[string]any{
@@ -499,10 +547,10 @@ func getCalicoBgpChartValues(
 	var serviceLbIPs, serviceExtIPs, serviceClusterIPs []string
 	var peers []map[string]any
 	var filters []map[string]any
-	if cpConfig.LoadBalancerConfig.CalicoBgpConfig != nil &&
+	if cpConfig.LoadBalancerConfig.CalicoConfig == nil || cpConfig.LoadBalancerConfig.CalicoConfig.CalicoBgpConfig != nil &&
 		*cluster.Shoot.Spec.Networking.Type == metal.ShootCalicoNetworkType {
-		if cpConfig.LoadBalancerConfig.CalicoBgpConfig.ServiceLoadBalancerIPs != nil {
-			for _, cidr := range cpConfig.LoadBalancerConfig.CalicoBgpConfig.ServiceLoadBalancerIPs {
+		if cpConfig.LoadBalancerConfig.CalicoConfig.CalicoBgpConfig.ServiceLoadBalancerIPs != nil {
+			for _, cidr := range cpConfig.LoadBalancerConfig.CalicoConfig.CalicoBgpConfig.ServiceLoadBalancerIPs {
 				if err := parseAddressPool(cidr); err != nil {
 					return nil, fmt.Errorf("invalid CIDR %q in pool: %w", cidr, err)
 				}
@@ -510,8 +558,8 @@ func getCalicoBgpChartValues(
 			}
 		}
 
-		if cpConfig.LoadBalancerConfig.CalicoBgpConfig.ServiceExternalIPs != nil {
-			for _, cidr := range cpConfig.LoadBalancerConfig.CalicoBgpConfig.ServiceExternalIPs {
+		if cpConfig.LoadBalancerConfig.CalicoConfig.CalicoBgpConfig.ServiceExternalIPs != nil {
+			for _, cidr := range cpConfig.LoadBalancerConfig.CalicoConfig.CalicoBgpConfig.ServiceExternalIPs {
 				if err := parseAddressPool(cidr); err != nil {
 					return nil, fmt.Errorf("invalid CIDR %q in pool: %w", cidr, err)
 				}
@@ -519,8 +567,8 @@ func getCalicoBgpChartValues(
 			}
 		}
 
-		if cpConfig.LoadBalancerConfig.CalicoBgpConfig.ServiceClusterIPs != nil {
-			for _, cidr := range cpConfig.LoadBalancerConfig.CalicoBgpConfig.ServiceClusterIPs {
+		if cpConfig.LoadBalancerConfig.CalicoConfig.CalicoBgpConfig.ServiceClusterIPs != nil {
+			for _, cidr := range cpConfig.LoadBalancerConfig.CalicoConfig.CalicoBgpConfig.ServiceClusterIPs {
 				if err := parseAddressPool(cidr); err != nil {
 					return nil, fmt.Errorf("invalid CIDR %q in pool: %w", cidr, err)
 				}
@@ -528,8 +576,8 @@ func getCalicoBgpChartValues(
 			}
 		}
 
-		if cpConfig.LoadBalancerConfig.CalicoBgpConfig.BGPFilter != nil {
-			for _, bgpFilter := range cpConfig.LoadBalancerConfig.CalicoBgpConfig.BGPFilter {
+		if cpConfig.LoadBalancerConfig.CalicoConfig.CalicoBgpConfig.BGPFilter != nil {
+			for _, bgpFilter := range cpConfig.LoadBalancerConfig.CalicoConfig.CalicoBgpConfig.BGPFilter {
 				var exportV4Filters, exportV6Filters, importV4Filters, importV6Filters []map[string]any
 				var err error
 
@@ -577,8 +625,8 @@ func getCalicoBgpChartValues(
 			}
 		}
 
-		if cpConfig.LoadBalancerConfig.CalicoBgpConfig.BgpPeer != nil {
-			for _, peer := range cpConfig.LoadBalancerConfig.CalicoBgpConfig.BgpPeer {
+		if cpConfig.LoadBalancerConfig.CalicoConfig.CalicoBgpConfig.BgpPeer != nil {
+			for _, peer := range cpConfig.LoadBalancerConfig.CalicoConfig.CalicoBgpConfig.BgpPeer {
 				peerMap := map[string]any{
 					"peerIP":       peer.PeerIP,
 					"asNumber":     peer.ASNumber,
@@ -594,11 +642,11 @@ func getCalicoBgpChartValues(
 
 	bgpValues := map[string]any{
 		"enabled":                true,
-		"asNumber":               cpConfig.LoadBalancerConfig.CalicoBgpConfig.ASNumber,
+		"asNumber":               cpConfig.LoadBalancerConfig.CalicoConfig.CalicoBgpConfig.ASNumber,
 		"serviceLoadBalancerIPs": serviceLbIPs,
 		"serviceExternalIPs":     serviceExtIPs,
 		"serviceClusterIPs":      serviceClusterIPs,
-		"nodeToNodeMeshEnabled":  cpConfig.LoadBalancerConfig.CalicoBgpConfig.NodeToNodeMeshEnabled,
+		"nodeToNodeMeshEnabled":  cpConfig.LoadBalancerConfig.CalicoConfig.CalicoBgpConfig.NodeToNodeMeshEnabled,
 		"bgpPeer":                peers,
 	}
 
