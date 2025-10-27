@@ -547,6 +547,7 @@ func getCalicoBgpChartValues(
 	var serviceLbIPs, serviceExtIPs, serviceClusterIPs []string
 	var peers []map[string]any
 	var filters []map[string]any
+	var calicoBgpConfig = cpConfig.LoadBalancerConfig.CalicoConfig.CalicoBgpConfig
 	if cpConfig.LoadBalancerConfig.CalicoConfig == nil || cpConfig.LoadBalancerConfig.CalicoConfig.CalicoBgpConfig != nil &&
 		*cluster.Shoot.Spec.Networking.Type == metal.ShootCalicoNetworkType {
 		if cpConfig.LoadBalancerConfig.CalicoConfig.CalicoBgpConfig.ServiceLoadBalancerIPs != nil {
@@ -558,8 +559,8 @@ func getCalicoBgpChartValues(
 			}
 		}
 
-		if cpConfig.LoadBalancerConfig.CalicoConfig.CalicoBgpConfig.ServiceExternalIPs != nil {
-			for _, cidr := range cpConfig.LoadBalancerConfig.CalicoConfig.CalicoBgpConfig.ServiceExternalIPs {
+		if calicoBgpConfig.ServiceExternalIPs != nil {
+			for _, cidr := range calicoBgpConfig.ServiceExternalIPs {
 				if err := parseAddressPool(cidr); err != nil {
 					return nil, fmt.Errorf("invalid CIDR %q in pool: %w", cidr, err)
 				}
@@ -567,8 +568,8 @@ func getCalicoBgpChartValues(
 			}
 		}
 
-		if cpConfig.LoadBalancerConfig.CalicoConfig.CalicoBgpConfig.ServiceClusterIPs != nil {
-			for _, cidr := range cpConfig.LoadBalancerConfig.CalicoConfig.CalicoBgpConfig.ServiceClusterIPs {
+		if calicoBgpConfig.ServiceClusterIPs != nil {
+			for _, cidr := range calicoBgpConfig.ServiceClusterIPs {
 				if err := parseAddressPool(cidr); err != nil {
 					return nil, fmt.Errorf("invalid CIDR %q in pool: %w", cidr, err)
 				}
@@ -576,8 +577,8 @@ func getCalicoBgpChartValues(
 			}
 		}
 
-		if cpConfig.LoadBalancerConfig.CalicoConfig.CalicoBgpConfig.BGPFilter != nil {
-			for _, bgpFilter := range cpConfig.LoadBalancerConfig.CalicoConfig.CalicoBgpConfig.BGPFilter {
+		if calicoBgpConfig.BGPFilter != nil {
+			for _, bgpFilter := range calicoBgpConfig.BGPFilter {
 				var exportV4Filters, exportV6Filters, importV4Filters, importV6Filters []map[string]any
 				var err error
 
@@ -625,8 +626,8 @@ func getCalicoBgpChartValues(
 			}
 		}
 
-		if cpConfig.LoadBalancerConfig.CalicoConfig.CalicoBgpConfig.BgpPeer != nil {
-			for _, peer := range cpConfig.LoadBalancerConfig.CalicoConfig.CalicoBgpConfig.BgpPeer {
+		if calicoBgpConfig.BgpPeer != nil {
+			for _, peer := range calicoBgpConfig.BgpPeer {
 				peerMap := map[string]any{
 					"peerIP":       peer.PeerIP,
 					"asNumber":     peer.ASNumber,
@@ -642,11 +643,11 @@ func getCalicoBgpChartValues(
 
 	bgpValues := map[string]any{
 		"enabled":                true,
-		"asNumber":               cpConfig.LoadBalancerConfig.CalicoConfig.CalicoBgpConfig.ASNumber,
+		"asNumber":               calicoBgpConfig.ASNumber,
 		"serviceLoadBalancerIPs": serviceLbIPs,
 		"serviceExternalIPs":     serviceExtIPs,
 		"serviceClusterIPs":      serviceClusterIPs,
-		"nodeToNodeMeshEnabled":  cpConfig.LoadBalancerConfig.CalicoConfig.CalicoBgpConfig.NodeToNodeMeshEnabled,
+		"nodeToNodeMeshEnabled":  calicoBgpConfig.NodeToNodeMeshEnabled,
 		"bgpPeer":                peers,
 	}
 
