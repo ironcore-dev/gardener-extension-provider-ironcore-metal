@@ -108,12 +108,11 @@ type CalicoConfig struct {
 
 // CalicoIPPool contains configuration for a Calico IP pool.
 type CalicoIPPool struct {
-	// AllowedUse controls what the IP pool will be used for.
-	// Must be "Tunnel", "Workload" or "LoadBalancer"
-	AllowedUses []string
+	// CalicoIPPoolAllowedUses controls what the IP pool will be used for.
+	CalicoIPPoolAllowedUses []CalicoIPPoolAllowedUse
 
-	// Determines the mode how IP addresses should be assigned from this pool.
-	AssignmentMode string
+	// CalicoIPPoolAssignmentMode determines the mode how IP addresses should be assigned from this pool.
+	CalicoIPPoolAssignmentMode CalicoIPPoolAssignmentMode
 
 	// CIDR is the CIDR block for the IP pool.
 	CIDR string
@@ -122,7 +121,30 @@ type CalicoIPPool struct {
 	Disabled bool
 }
 
+// CalicoIPPoolAllowedUse controls what the IP pool will be used for.
+type CalicoIPPoolAllowedUse string
+
+const (
+	// CalicoIPPoolAllowedUseLoadBalancer indicates that the IP pool is used for loadbalancer.
+	CalicoIPPoolAllowedUseLoadBalancer CalicoIPPoolAllowedUse = "LoadBalancer"
+
+	// CalicoIPPoolAllowedUseTunnel indicates that the IP pool is used for tunnel.
+	CalicoIPPoolAllowedUseTunnel CalicoIPPoolAllowedUse = "Tunnel"
+
+	// CalicoIPPoolAllowedUseWorkload indicates that the IP pool is used for workload.
+	CalicoIPPoolAllowedUseWorkload CalicoIPPoolAllowedUse = "Workload"
+)
+
+// CalicoIPPoolAssignmentMode determines the mode how IP addresses should be assigned from this pool.
 type CalicoIPPoolAssignmentMode string
+
+const (
+	// CalicoIPPoolAssignmentModeAutomatic indicates that IPs from the Calico IP pool are assigned automatically.
+	CalicoIPPoolAssignmentModeAutomatic CalicoIPPoolAssignmentMode = "Automatic"
+
+	// CalicoIPPoolAssignmentModeManual indicates that IPs from the Calico IP pool are assigned manually.
+	CalicoIPPoolAssignmentModeManual CalicoIPPoolAssignmentMode = "Manual"
+)
 
 // CalicoBgpConfig contains BGP configuration settings for calico.
 type CalicoBgpConfig struct {

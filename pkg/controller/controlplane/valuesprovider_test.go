@@ -999,8 +999,8 @@ var _ = Describe("Valueprovider Reconcile", func() {
 												CIDR: "10.10.10.0/24",
 											},
 											{
-												CIDR:           "10.10.20.0/24",
-												AssignmentMode: metal.CalicoIPPoolAssignmentModeManual,
+												CIDR:                       "10.10.20.0/24",
+												CalicoIPPoolAssignmentMode: apismetal.CalicoIPPoolAssignmentModeManual,
 											},
 										},
 									},
@@ -1064,14 +1064,14 @@ var _ = Describe("Valueprovider Reconcile", func() {
 					"enabled": true,
 					"pools": []map[string]any{
 						{
-							"allowedUses":    []string{"LoadBalancer"},
-							"assignmentMode": "Automatic",
+							"allowedUses":    []apismetal.CalicoIPPoolAllowedUse{apismetal.CalicoIPPoolAllowedUseLoadBalancer},
+							"assignmentMode": apismetal.CalicoIPPoolAssignmentModeAutomatic,
 							"cidr":           "10.10.10.0/24",
 							"disabled":       false,
 						},
 						{
-							"allowedUses":    []string{"LoadBalancer"},
-							"assignmentMode": "Manual",
+							"allowedUses":    []apismetal.CalicoIPPoolAllowedUse{apismetal.CalicoIPPoolAllowedUseLoadBalancer},
+							"assignmentMode": apismetal.CalicoIPPoolAssignmentModeManual,
 							"cidr":           "10.10.20.0/24",
 							"disabled":       false,
 						},

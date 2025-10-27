@@ -533,26 +533,28 @@ CalicoBgpConfig
 <td>
 <code>allowedUses</code></br>
 <em>
-[]string
+<a href="#ironcore-metal.provider.extensions.gardener.cloud/v1alpha1.CalicoIPPoolAllowedUse">
+[]CalicoIPPoolAllowedUse
+</a>
 </em>
 </td>
 <td>
 <em>(Optional)</em>
-<p>AllowedUse controls what the IP pool will be used for.
-&ldquo;Tunnel&rdquo;, &ldquo;Workload&rdquo; or &ldquo;LoadBalancer&rdquo;. Default is &ldquo;LoadBalancer&rdquo;.</p>
+<p>CalicoIPPoolAllowedUses controls what the IP pool will be used for.</p>
 </td>
 </tr>
 <tr>
 <td>
 <code>assignmentMode</code></br>
 <em>
-string
+<a href="#ironcore-metal.provider.extensions.gardener.cloud/v1alpha1.CalicoIPPoolAssignmentMode">
+CalicoIPPoolAssignmentMode
+</a>
 </em>
 </td>
 <td>
 <em>(Optional)</em>
-<p>Determines the mode how IP addresses should be assigned from this pool.
-&ldquo;Automatic&rdquo; or &ldquo;Manual&rdquo;. Default is &ldquo;Automatic&rdquo;.</p>
+<p>CalicoIPPoolAssignmentMode determines the mode how IP addresses should be assigned from this pool.</p>
 </td>
 </tr>
 <tr>
@@ -581,6 +583,24 @@ Default is false.</p>
 </tr>
 </tbody>
 </table>
+<h3 id="ironcore-metal.provider.extensions.gardener.cloud/v1alpha1.CalicoIPPoolAllowedUse">CalicoIPPoolAllowedUse
+(<code>string</code> alias)</p></h3>
+<p>
+(<em>Appears on:</em>
+<a href="#ironcore-metal.provider.extensions.gardener.cloud/v1alpha1.CalicoIPPool">CalicoIPPool</a>)
+</p>
+<p>
+<p>CalicoIPPoolAllowedUse controls what the IP pool will be used for.</p>
+</p>
+<h3 id="ironcore-metal.provider.extensions.gardener.cloud/v1alpha1.CalicoIPPoolAssignmentMode">CalicoIPPoolAssignmentMode
+(<code>string</code> alias)</p></h3>
+<p>
+(<em>Appears on:</em>
+<a href="#ironcore-metal.provider.extensions.gardener.cloud/v1alpha1.CalicoIPPool">CalicoIPPool</a>)
+</p>
+<p>
+<p>CalicoIPPoolAssignmentMode determines the mode how IP addresses should be assigned from this pool.</p>
+</p>
 <h3 id="ironcore-metal.provider.extensions.gardener.cloud/v1alpha1.CloudControllerManagerConfig">CloudControllerManagerConfig
 </h3>
 <p>

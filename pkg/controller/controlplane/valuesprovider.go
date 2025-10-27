@@ -506,18 +506,26 @@ func getCalicoIPPoolChartValues(
 			if err := parseAddressPool(pool.CIDR); err != nil {
 				return nil, fmt.Errorf("invalid CIDR %q in pool: %w", pool.CIDR, err)
 			}
-			if pool.AssignmentMode == "" {
-				pool.AssignmentMode = metal.CalicoIPPoolAssignmentModeAutomatic
-			} else if !validation.ValidateCalicoIPPoolAssignmentMode(metalapi.CalicoIPPoolAssignmentMode(pool.AssignmentMode)) {
-				return nil, fmt.Errorf("invalid AssignmentMode %s, must be %s or %s", pool.AssignmentMode, metal.CalicoIPPoolAssignmentModeAutomatic, metal.CalicoIPPoolAssignmentModeManual)
+			if pool.CalicoIPPoolAssignmentMode == "" {
+				pool.CalicoIPPoolAssignmentMode = metalapi.CalicoIPPoolAssignmentModeAutomatic
+			} else if !validation.ValidateCalicoIPPoolAssignmentMode(pool.CalicoIPPoolAssignmentMode) {
+				return nil, fmt.Errorf("invalid AssignmentMode %s, must be %s or %s",
+					pool.CalicoIPPoolAssignmentMode, metalapi.CalicoIPPoolAssignmentModeAutomatic, metalapi.CalicoIPPoolAssignmentModeManual)
 			}
-			if pool.AllowedUses == nil {
-				pool.AllowedUses = make([]string, 0)
-				pool.AllowedUses = append(pool.AllowedUses, "LoadBalancer")
+			if pool.CalicoIPPoolAllowedUses == nil {
+				pool.CalicoIPPoolAllowedUses = make([]metalapi.CalicoIPPoolAllowedUse, 0)
+				pool.CalicoIPPoolAllowedUses = append(pool.CalicoIPPoolAllowedUses, metalapi.CalicoIPPoolAllowedUseLoadBalancer)
+			} else {
+				for _, use := range pool.CalicoIPPoolAllowedUses {
+					if !validation.ValidateCalicoIPPoolAllowedUses(use) {
+						return nil, fmt.Errorf("invalid AllowedUses %s, must be %s or %s or %s",
+							pool.CalicoIPPoolAssignmentMode, metalapi.CalicoIPPoolAllowedUseLoadBalancer, metalapi.CalicoIPPoolAllowedUseTunnel, metalapi.CalicoIPPoolAllowedUseWorkload)
+					}
+				}
 			}
 			poolMap := map[string]any{
-				"allowedUses":    pool.AllowedUses,
-				"assignmentMode": pool.AssignmentMode,
+				"allowedUses":    pool.CalicoIPPoolAllowedUses,
+				"assignmentMode": pool.CalicoIPPoolAssignmentMode,
 				"cidr":           pool.CIDR,
 				"disabled":       pool.Disabled,
 			}

@@ -32,5 +32,9 @@ func ValidateControlPlaneConfigUpdate(oldConfig, newConfig *apismetal.ControlPla
 }
 
 func ValidateCalicoIPPoolAssignmentMode(mode apismetal.CalicoIPPoolAssignmentMode) bool {
-	return mode == metal.CalicoIPPoolAssignmentModeAutomatic || mode == metal.CalicoIPPoolAssignmentModeManual
+	return mode == apismetal.CalicoIPPoolAssignmentModeAutomatic || mode == apismetal.CalicoIPPoolAssignmentModeManual
+}
+
+func ValidateCalicoIPPoolAllowedUses(mode apismetal.CalicoIPPoolAllowedUse) bool {
+	return mode == apismetal.CalicoIPPoolAllowedUseLoadBalancer || mode == apismetal.CalicoIPPoolAllowedUseTunnel || mode == apismetal.CalicoIPPoolAllowedUseWorkload
 }

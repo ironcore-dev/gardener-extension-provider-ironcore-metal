@@ -430,8 +430,8 @@ func Convert_metal_CalicoConfig_To_v1alpha1_CalicoConfig(in *metal.CalicoConfig,
 }
 
 func autoConvert_v1alpha1_CalicoIPPool_To_metal_CalicoIPPool(in *CalicoIPPool, out *metal.CalicoIPPool, s conversion.Scope) error {
-	out.AllowedUses = *(*[]string)(unsafe.Pointer(&in.AllowedUses))
-	out.AssignmentMode = in.AssignmentMode
+	out.CalicoIPPoolAllowedUses = *(*[]metal.CalicoIPPoolAllowedUse)(unsafe.Pointer(&in.CalicoIPPoolAllowedUses))
+	out.CalicoIPPoolAssignmentMode = metal.CalicoIPPoolAssignmentMode(in.CalicoIPPoolAssignmentMode)
 	out.CIDR = in.CIDR
 	out.Disabled = in.Disabled
 	return nil
@@ -443,8 +443,8 @@ func Convert_v1alpha1_CalicoIPPool_To_metal_CalicoIPPool(in *CalicoIPPool, out *
 }
 
 func autoConvert_metal_CalicoIPPool_To_v1alpha1_CalicoIPPool(in *metal.CalicoIPPool, out *CalicoIPPool, s conversion.Scope) error {
-	out.AllowedUses = *(*[]string)(unsafe.Pointer(&in.AllowedUses))
-	out.AssignmentMode = in.AssignmentMode
+	out.CalicoIPPoolAllowedUses = *(*[]CalicoIPPoolAllowedUse)(unsafe.Pointer(&in.CalicoIPPoolAllowedUses))
+	out.CalicoIPPoolAssignmentMode = CalicoIPPoolAssignmentMode(in.CalicoIPPoolAssignmentMode)
 	out.CIDR = in.CIDR
 	out.Disabled = in.Disabled
 	return nil
