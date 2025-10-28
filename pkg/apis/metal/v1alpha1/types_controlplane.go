@@ -122,10 +122,12 @@ type CalicoConfig struct {
 // CalicoIPPool contains configuration for a Calico IP pool.
 type CalicoIPPool struct {
 	// CalicoIPPoolAllowedUses controls what the IP pool will be used for.
+	// +kubebuilder:validation:Enum=LoadBalancer;Tunnel;Workload
 	// +optional
 	CalicoIPPoolAllowedUses []CalicoIPPoolAllowedUse `json:"allowedUses,omitempty"`
 
 	// CalicoIPPoolAssignmentMode determines the mode how IP addresses should be assigned from this pool.
+	// +kubebuilder:validation:Enum=Automatic;Manual
 	// +optional
 	CalicoIPPoolAssignmentMode CalicoIPPoolAssignmentMode `json:"assignmentMode,omitempty"`
 
