@@ -162,6 +162,7 @@ var _ = Describe("Machines", func() {
 				Annotations:          pool.Annotations,
 				Taints:               pool.Taints,
 				MachineConfiguration: genericworkeractuator.ReadMachineConfiguration(pool),
+				Priority:             ptr.To(int32(1)),
 			},
 			worker.MachineDeployment{
 				Name:       deploymentName2,
@@ -182,6 +183,7 @@ var _ = Describe("Machines", func() {
 				Annotations:          pool.Annotations,
 				Taints:               pool.Taints,
 				MachineConfiguration: genericworkeractuator.ReadMachineConfiguration(pool),
+				Priority:             ptr.To(int32(1)),
 			},
 		}))
 	})
