@@ -404,7 +404,7 @@ func (vp *valuesProvider) getControlPlaneShootChartValues(cluster *extensionscon
 		return nil, err
 	}
 
-	calicoBgp, err := getCalicoBgpChartValues(cp, cluster)
+	calicoBgp, err := getCalicoChartValues(cp, cluster)
 	if err != nil {
 		return nil, err
 	}
@@ -539,7 +539,7 @@ func getCalicoIPPoolChartValues(
 }
 
 // getCalicoBgpChartValues collects and returns the Calico BGP chart values.
-func getCalicoBgpChartValues(
+func getCalicoChartValues(
 	cpConfig *metalapi.ControlPlaneConfig,
 	cluster *extensionscontroller.Cluster,
 ) (map[string]any, error) {
@@ -556,8 +556,7 @@ func getCalicoBgpChartValues(
 	var peers []map[string]any
 	var filters []map[string]any
 	var calicoBgpConfig = cpConfig.LoadBalancerConfig.CalicoConfig.CalicoBgpConfig
-	if cpConfig.LoadBalancerConfig.CalicoConfig == nil || cpConfig.LoadBalancerConfig.CalicoConfig.CalicoBgpConfig != nil &&
-		*cluster.Shoot.Spec.Networking.Type == metal.ShootCalicoNetworkType {
+	if *cluster.Shoot.Spec.Networking.Type == metal.ShootCalicoNetworkType {
 		if cpConfig.LoadBalancerConfig.CalicoConfig.CalicoBgpConfig.ServiceLoadBalancerIPs != nil {
 			for _, cidr := range cpConfig.LoadBalancerConfig.CalicoConfig.CalicoBgpConfig.ServiceLoadBalancerIPs {
 				if err := parseAddressPool(cidr); err != nil {
