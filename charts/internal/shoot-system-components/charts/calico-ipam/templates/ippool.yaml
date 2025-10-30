@@ -1,5 +1,5 @@
-{{- if .Values.ipam.enabled }}
-{{- range $pool := .Values.ipam.pools }}
+{{- if .Values.enabled }}
+{{- range $pool := .Values.pools }}
 ---
 apiVersion: crd.projectcalico.org/v1
 kind: IPPool

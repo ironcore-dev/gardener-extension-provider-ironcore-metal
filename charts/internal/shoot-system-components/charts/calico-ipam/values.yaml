@@ -1,3 +1,2 @@
-ipam:
-  enabled: false
-  pools: []
+enabled: false
+pools: []
