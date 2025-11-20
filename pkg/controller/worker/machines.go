@@ -62,7 +62,7 @@ func (w *workerDelegate) GenerateMachineDeployments(ctx context.Context) (worker
 				return nil, err
 			}
 			var (
-				deploymentName = fmt.Sprintf("%s-%s-z%d", w.worker.Namespace, pool.Name, zoneIndex+1)
+				deploymentName = fmt.Sprintf("%s-%s-z%d", w.cluster.Shoot.Status.TechnicalID, pool.Name, zoneIndex+1)
 				className      = fmt.Sprintf("%s-%s", deploymentName, workerPoolHash)
 			)
 			zoneIdx := int32(zoneIndex)
@@ -153,7 +153,7 @@ func (w *workerDelegate) generateMachineClassAndSecrets(ctx context.Context) ([]
 
 		for zoneIndex, zone := range pool.Zones {
 			var (
-				deploymentName = fmt.Sprintf("%s-%s-z%d", w.worker.Namespace, pool.Name, zoneIndex+1)
+				deploymentName = fmt.Sprintf("%s-%s-z%d", w.cluster.Shoot.Status.TechnicalID, pool.Name, zoneIndex+1)
 				className      = fmt.Sprintf("%s-%s", deploymentName, workerPoolHash)
 			)
 
@@ -172,7 +172,7 @@ func (w *workerDelegate) generateMachineClassAndSecrets(ctx context.Context) ([]
 			}
 
 			machineClassProviderSpec[metal.LabelsFieldName] = map[string]string{
-				metal.ClusterNameLabel: w.cluster.ObjectMeta.Name,
+				metal.ClusterNameLabel: w.cluster.Shoot.Status.TechnicalID,
 			}
 
 			machineClassProviderSpecJSON, err := json.Marshal(machineClassProviderSpec)

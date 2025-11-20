@@ -49,7 +49,7 @@ var _ = Describe("Machines", func() {
 			// TODO: Fix machine pool hashing
 			workerPoolHash, err := worker.WorkerPoolHash(pool, testCluster, nil, nil, nil)
 			Expect(err).NotTo(HaveOccurred())
-			deploymentName = fmt.Sprintf("%s-%s-z%d", ns.Name, pool.Name, 1)
+			deploymentName = fmt.Sprintf("%s-%s-z%d", technicalID, pool.Name, 1)
 			className = fmt.Sprintf("%s-%s", deploymentName, workerPoolHash)
 			machineClass = &machinecontrollerv1alpha1.MachineClass{
 				ObjectMeta: metav1.ObjectMeta{
@@ -80,7 +80,7 @@ var _ = Describe("Machines", func() {
 			machineClassProviderSpec := map[string]any{
 				"image": "registry/my-os",
 				"labels": map[string]any{
-					metal.ClusterNameLabel: testCluster.ObjectMeta.Name,
+					metal.ClusterNameLabel: technicalID,
 				},
 				metal.ServerLabelsFieldName: map[string]string{
 					"foo":  "bar",
@@ -129,8 +129,8 @@ var _ = Describe("Machines", func() {
 		workerPoolHash, err := worker.WorkerPoolHash(pool, testCluster, nil, nil, nil)
 		Expect(err).NotTo(HaveOccurred())
 		var (
-			deploymentName1 = fmt.Sprintf("%s-%s-z%d", w.Namespace, pool.Name, 1)
-			deploymentName2 = fmt.Sprintf("%s-%s-z%d", w.Namespace, pool.Name, 2)
+			deploymentName1 = fmt.Sprintf("%s-%s-z%d", technicalID, pool.Name, 1)
+			deploymentName2 = fmt.Sprintf("%s-%s-z%d", technicalID, pool.Name, 2)
 			className1      = fmt.Sprintf("%s-%s", deploymentName1, workerPoolHash)
 			className2      = fmt.Sprintf("%s-%s", deploymentName2, workerPoolHash)
 		)

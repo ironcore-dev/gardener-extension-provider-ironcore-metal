@@ -56,6 +56,8 @@ var (
 
 // global Gardener resources used by delegates
 var (
+	technicalID = "shoot--test--cluster"
+
 	shootVersionMajorMinor = "1.2"
 	shootVersion           = shootVersionMajorMinor + ".3"
 	userDataSecretName     = "userdata-secret-name"
@@ -288,6 +290,9 @@ func SetupTest() (*corev1.Namespace, *gardener.ChartApplier) {
 							Raw: []byte("{}"),
 						},
 					},
+				},
+				Status: gardencorev1beta1.ShootStatus{
+					TechnicalID: technicalID,
 				},
 			},
 		}
