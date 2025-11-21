@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company and IronCore contributors
+// SPDX-FileCopyrightText: SAP SE or an SAP affiliate company and IronCore contributors
 // SPDX-License-Identifier: Apache-2.0
 
 package worker
@@ -164,10 +164,12 @@ func (w *workerDelegate) generateMachineClassAndSecrets(ctx context.Context) ([]
 			nodeTemplate := &machinecontrollerv1alpha1.NodeTemplate{}
 			if pool.NodeTemplate != nil {
 				nodeTemplate = &machinecontrollerv1alpha1.NodeTemplate{
-					Capacity:     pool.NodeTemplate.Capacity,
-					InstanceType: pool.MachineType,
-					Region:       w.worker.Spec.Region,
-					Zone:         zone,
+					Architecture:    pool.Architecture,
+					Capacity:        pool.NodeTemplate.Capacity,
+					VirtualCapacity: pool.NodeTemplate.VirtualCapacity,
+					InstanceType:    pool.MachineType,
+					Region:          w.worker.Spec.Region,
+					Zone:            zone,
 				}
 			}
 

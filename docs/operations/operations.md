@@ -47,8 +47,8 @@ spec:
   type: metal
   kubernetes:
     versions:
-    - version: 1.25.3
-    - version: 1.24.3
+    - version: 1.34.0
+    - version: 1.33.0
   machineImages:
     - name: gardenlinux
       versions:
@@ -135,7 +135,7 @@ metadata:
   namespace: my-namespace
 spec:
   cloudProfileName: metal
-  secretBindingName: my-credentials
+  credentialsBindingName: my-credentials
   region: my-region
   networking:
     type: calico
@@ -163,5 +163,5 @@ spec:
           - my-zone-b
           - my-zone-c
   kubernetes:
-    version: 1.26.0
+    version: 1.34.0
 ```

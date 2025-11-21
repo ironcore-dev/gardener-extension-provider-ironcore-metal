@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company and IronCore contributors
+// SPDX-FileCopyrightText: SAP SE or an SAP affiliate company and IronCore contributors
 // SPDX-License-Identifier: Apache-2.0
 
 package controlplane_test
@@ -355,6 +355,8 @@ var _ = Describe("Ensurer", func() {
 				ImagePullPolicy: corev1.PullIfNotPresent,
 				Args: []string{
 					"--control-kubeconfig=inClusterConfig",
+					"--kube-api-qps=100",
+					"--kube-api-burst=200",
 					"--machine-creation-timeout=20m",
 					"--machine-drain-timeout=2h",
 					"--machine-health-timeout=10m",

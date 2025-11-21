@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company and IronCore contributors
+// SPDX-FileCopyrightText: SAP SE or an SAP affiliate company and IronCore contributors
 // SPDX-License-Identifier: Apache-2.0
 
 package worker
@@ -105,10 +105,13 @@ var _ = Describe("Machines", func() {
 				}),
 				HaveField("Provider", "ironcore-metal"),
 				HaveField("NodeTemplate", &machinecontrollerv1alpha1.NodeTemplate{
-					Capacity:     pool.NodeTemplate.Capacity,
-					InstanceType: pool.MachineType,
-					Region:       w.Spec.Region,
-					Zone:         "zone1",
+					Architecture: pool.Architecture,
+
+					Capacity:        pool.NodeTemplate.Capacity,
+					VirtualCapacity: pool.NodeTemplate.VirtualCapacity,
+					InstanceType:    pool.MachineType,
+					Region:          w.Spec.Region,
+					Zone:            "zone1",
 				}),
 				HaveField("ProviderSpec", runtime.RawExtension{
 					Raw: encodeMap(machineClassProviderSpec),

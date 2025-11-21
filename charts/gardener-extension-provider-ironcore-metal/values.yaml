@@ -15,7 +15,7 @@ vpa:
       cpu: 50m
       memory: 64Mi
   updatePolicy:
-    updateMode: "Auto"
+    updateMode: "Recreate"
 
 metricsPort: "{{ index .Values.usablePorts 0 }}"
 healthPort: "{{ index .Values.usablePorts 2 }}"
@@ -84,7 +84,7 @@ gardener:
     featureGates: {}
   seed:
     provider: metal
-# autonomousShootCluster: false
+# selfHostedShootCluster: false
 
 usablePorts:
 - 8080  # metrics

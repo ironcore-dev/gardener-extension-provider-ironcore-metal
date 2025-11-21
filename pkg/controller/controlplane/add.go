@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company and IronCore contributors
+// SPDX-FileCopyrightText: SAP SE or an SAP affiliate company and IronCore contributors
 // SPDX-License-Identifier: Apache-2.0
 
 package controlplane
@@ -39,12 +39,9 @@ func AddToManagerWithOptions(ctx context.Context, mgr manager.Manager, opts AddO
 		metal.ProviderName,
 		secretConfigsFunc,
 		shootAccessSecretsFunc,
-		nil,
-		nil,
 		configChart,
 		controlPlaneChart,
 		controlPlaneShootChart,
-		nil,
 		nil,
 		nil,
 		NewValuesProvider(mgr),
