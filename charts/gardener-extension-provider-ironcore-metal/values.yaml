@@ -15,7 +15,7 @@ vpa:
       cpu: 50m
       memory: 64Mi
   updatePolicy:
-    updateMode: "Auto"
+    updateMode: "Recreate"
 
 metricsPort: "{{ index .Values.usablePorts 0 }}"
 healthPort: "{{ index .Values.usablePorts 2 }}"
