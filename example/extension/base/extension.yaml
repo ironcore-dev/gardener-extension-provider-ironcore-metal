@@ -1,0 +1,35 @@
+apiVersion: operator.gardener.cloud/v1alpha1
+kind: Extension
+metadata:
+  name: provider-ironcore-metal
+spec:
+  deployment:
+    admission:
+      runtimeCluster:
+        helm:
+          ociRepository:
+            ref: ghcr.io/ironcore-dev/charts/gardener-extension-admission-ironcore-metal-runtime:v0.1.0
+      virtualCluster:
+        helm:
+          ociRepository:
+            ref: ghcr.io/ironcore-dev/charts/gardener-extension-admission-ironcore-metal-application:v0.1.0
+    extension:
+      helm:
+        ociRepository:
+          ref: ghcr.io/ironcore-dev/charts/gardener-extension-provider-ironcore-metal:v0.1.0
+      injectGardenKubeconfig: true
+  resources:
+  - kind: BackupBucket
+    type: ironcore-metal
+  - kind: BackupEntry
+    type: ironcore-metal
+  - kind: Bastion
+    type: ironcore-metal
+  - kind: ControlPlane
+    type: ironcore-metal
+  - kind: DNSRecord
+    type: ironcore-metal
+  - kind: Infrastructure
+    type: ironcore-metal
+  - kind: Worker
+    type: ironcore-metal
