@@ -84,7 +84,7 @@ gardener:
     featureGates: {}
   seed:
     provider: metal
-# autonomousShootCluster: false
+# selfHostedShootCluster: false
 
 usablePorts:
 - 8080  # metrics
