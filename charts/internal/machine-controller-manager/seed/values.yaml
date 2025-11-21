@@ -22,7 +22,7 @@ metricsPortMetal: 10259
 vpa:
   enabled: true
   updatePolicy:
-    updateMode: "Auto"
+    updateMode: "Recreate"
   resourcePolicy:
     mcm:
       maxAllowed:
