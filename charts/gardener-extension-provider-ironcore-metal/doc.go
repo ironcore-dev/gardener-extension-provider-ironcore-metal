@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company and IronCore contributors
+// SPDX-FileCopyrightText: SAP SE or an SAP affiliate company and IronCore contributors
 // SPDX-License-Identifier: Apache-2.0
 
 //go:generate sh -c "bash $GARDENER_HACK_DIR/generate-controller-registration.sh provider-ironcore-metal . $(cat ../../VERSION) ../../example/controller-registration.yaml ControlPlane:ironcore-metal Infrastructure:ironcore-metal Worker:ironcore-metal"
