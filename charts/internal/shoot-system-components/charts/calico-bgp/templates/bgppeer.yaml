@@ -5,9 +5,9 @@
 apiVersion: crd.projectcalico.org/v1
 kind: BGPPeer
 metadata:
-  name: bgppeer-{{ $peer.asNumber }}-{{ $peer.peerIP }}
+  name: bgppeer-{{ printf "%.0f" $peer.asNumber }}-{{ $peer.peerIP }}
 spec:
-  asNumber: {{ $peer.asNumber }}
+  asNumber: {{ printf "%.0f" $peer.asNumber }}
   {{- if $peer.nodeSelector }}
   nodeSelector: {{ $peer.nodeSelector }}
   {{- end }}
