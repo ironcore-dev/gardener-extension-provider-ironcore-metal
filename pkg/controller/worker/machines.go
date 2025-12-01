@@ -12,6 +12,7 @@ import (
 	"github.com/gardener/gardener/extensions/pkg/controller/worker"
 	genericworkeractuator "github.com/gardener/gardener/extensions/pkg/controller/worker/genericactuator"
 	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
+	gardencorev1beta1helper "github.com/gardener/gardener/pkg/apis/core/v1beta1/helper"
 	"github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
 	machinecontrollerv1alpha1 "github.com/gardener/machine-controller-manager/pkg/apis/machine/v1alpha1"
 	"github.com/imdario/mergo"
@@ -77,6 +78,20 @@ func (w *workerDelegate) GenerateMachineDeployments(ctx context.Context) (worker
 				RollingUpdate: &machinecontrollerv1alpha1.RollingUpdateMachineDeployment{
 					UpdateConfiguration: updateConfiguration,
 				},
+			}
+
+			if gardencorev1beta1helper.IsUpdateStrategyInPlace(pool.UpdateStrategy) {
+				machineDeploymentStrategy = machinecontrollerv1alpha1.MachineDeploymentStrategy{
+					Type: machinecontrollerv1alpha1.InPlaceUpdateMachineDeploymentStrategyType,
+					InPlaceUpdate: &machinecontrollerv1alpha1.InPlaceUpdateMachineDeployment{
+						UpdateConfiguration: updateConfiguration,
+						OrchestrationType:   machinecontrollerv1alpha1.OrchestrationTypeAuto,
+					},
+				}
+
+				if gardencorev1beta1helper.IsUpdateStrategyManualInPlace(pool.UpdateStrategy) {
+					machineDeploymentStrategy.InPlaceUpdate.OrchestrationType = machinecontrollerv1alpha1.OrchestrationTypeManual
+				}
 			}
 
 			machineDeployments = append(machineDeployments, worker.MachineDeployment{
