@@ -472,7 +472,7 @@ func getMetallbChartValues(cpConfig *metalapi.ControlPlaneConfig) (map[string]an
 	}
 
 	for _, cidr := range cpConfig.LoadBalancerConfig.MetallbConfig.IPAddressPool {
-		if err := parseAddressPool(cidr); err != nil {
+		if _, err := parseAddressPool(cidr); err != nil {
 			return nil, fmt.Errorf("invalid CIDR %q in pool: %w", cidr, err)
 		}
 	}
@@ -503,7 +503,8 @@ func getCalicoIPPoolChartValues(
 	if cpConfig.LoadBalancerConfig.CalicoConfig == nil || cpConfig.LoadBalancerConfig.CalicoConfig.CalicoIPPools != nil &&
 		*cluster.Shoot.Spec.Networking.Type == metal.ShootCalicoNetworkType {
 		for _, pool := range cpConfig.LoadBalancerConfig.CalicoConfig.CalicoIPPools {
-			if err := parseAddressPool(pool.CIDR); err != nil {
+			mask, err := parseAddressPool(pool.CIDR)
+			if err != nil {
 				return nil, fmt.Errorf("invalid CIDR %q in pool: %w", pool.CIDR, err)
 			}
 			if pool.CalicoIPPoolAssignmentMode == "" {
@@ -527,6 +528,7 @@ func getCalicoIPPoolChartValues(
 				"allowedUses":    pool.CalicoIPPoolAllowedUses,
 				"assignmentMode": pool.CalicoIPPoolAssignmentMode,
 				"cidr":           pool.CIDR,
+				"blockSize":      mask,
 				"disabled":       pool.Disabled,
 			}
 			pools = append(pools, poolMap)
@@ -559,7 +561,7 @@ func getCalicoChartValues(
 	if *cluster.Shoot.Spec.Networking.Type == metal.ShootCalicoNetworkType {
 		if cpConfig.LoadBalancerConfig.CalicoConfig.CalicoBgpConfig.ServiceLoadBalancerIPs != nil {
 			for _, cidr := range cpConfig.LoadBalancerConfig.CalicoConfig.CalicoBgpConfig.ServiceLoadBalancerIPs {
-				if err := parseAddressPool(cidr); err != nil {
+				if _, err := parseAddressPool(cidr); err != nil {
 					return nil, fmt.Errorf("invalid CIDR %q in pool: %w", cidr, err)
 				}
 				serviceLbIPs = append(serviceLbIPs, cidr)
@@ -568,7 +570,7 @@ func getCalicoChartValues(
 
 		if calicoBgpConfig.ServiceExternalIPs != nil {
 			for _, cidr := range calicoBgpConfig.ServiceExternalIPs {
-				if err := parseAddressPool(cidr); err != nil {
+				if _, err := parseAddressPool(cidr); err != nil {
 					return nil, fmt.Errorf("invalid CIDR %q in pool: %w", cidr, err)
 				}
 				serviceExtIPs = append(serviceExtIPs, cidr)
@@ -577,7 +579,7 @@ func getCalicoChartValues(
 
 		if calicoBgpConfig.ServiceClusterIPs != nil {
 			for _, cidr := range calicoBgpConfig.ServiceClusterIPs {
-				if err := parseAddressPool(cidr); err != nil {
+				if _, err := parseAddressPool(cidr); err != nil {
 					return nil, fmt.Errorf("invalid CIDR %q in pool: %w", cidr, err)
 				}
 				serviceClusterIPs = append(serviceClusterIPs, cidr)
@@ -671,7 +673,7 @@ func getCalicoChartValues(
 func processFilters(filtersConfig []metalapi.BGPFilterRule) ([]map[string]any, error) {
 	var filters []map[string]any
 	for _, filter := range filtersConfig {
-		if err := parseAddressPool(filter.CIDR); err != nil {
+		if _, err := parseAddressPool(filter.CIDR); err != nil {
 			return nil, fmt.Errorf("invalid CIDR %q in pool: %w", filter.CIDR, err)
 		}
 		filterMap := map[string]any{
@@ -684,28 +686,29 @@ func processFilters(filtersConfig []metalapi.BGPFilterRule) ([]map[string]any, e
 	return filters, nil
 }
 
-func parseAddressPool(cidr string) error {
+func parseAddressPool(cidr string) (int, error) {
 	if !strings.Contains(cidr, "-") {
-		_, _, err := net.ParseCIDR(cidr)
+		_, ipnet, err := net.ParseCIDR(cidr)
 		if err != nil {
-			return fmt.Errorf("invalid CIDR %q", cidr)
+			return 0, fmt.Errorf("invalid CIDR %q", cidr)
 		}
-		return nil
+		ones, _ := ipnet.Mask.Size()
+		return ones, nil
 	}
 	fs := strings.SplitN(cidr, "-", 2)
 	if len(fs) != 2 {
-		return fmt.Errorf("invalid IP range %q", cidr)
+		return 0, fmt.Errorf("invalid IP range %q", cidr)
 	}
 	start := net.ParseIP(strings.TrimSpace(fs[0]))
 	if start == nil {
-		return fmt.Errorf("invalid IP range %q: invalid start IP %q", cidr, fs[0])
+		return 0, fmt.Errorf("invalid IP range %q: invalid start IP %q", cidr, fs[0])
 	}
 	end := net.ParseIP(strings.TrimSpace(fs[1]))
 	if end == nil {
-		return fmt.Errorf("invalid IP range %q: invalid end IP %q", cidr, fs[1])
+		return 0, fmt.Errorf("invalid IP range %q: invalid end IP %q", cidr, fs[1])
 	}
 	if bytes.Compare(start, end) > 0 {
-		return fmt.Errorf("invalid IP range %q: start IP %q is after the end IP %q", cidr, start, end)
+		return 0, fmt.Errorf("invalid IP range %q: start IP %q is after the end IP %q", cidr, start, end)
 	}
-	return nil
+	return 0, nil
 }

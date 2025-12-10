@@ -7,6 +7,7 @@ metadata:
   name: ippool-{{ $pool.cidr | replace "/" "-" | replace "." "-" | replace ":" "-" }}
 spec:
   cidr: {{ $pool.cidr }}
+  blockSize: {{ $pool.blockSize }}
   natOutgoing: true
   disabled: {{ $pool.disabled }}
   assignmentMode: {{ $pool.assignmentMode }}
