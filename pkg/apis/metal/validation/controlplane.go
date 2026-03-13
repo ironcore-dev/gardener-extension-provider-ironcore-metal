@@ -17,6 +17,9 @@ func ValidateControlPlaneConfig(controlPlaneConfig *apismetal.ControlPlaneConfig
 
 	if controlPlaneConfig.CloudControllerManager != nil {
 		allErrs = append(allErrs, featurevalidation.ValidateFeatureGates(controlPlaneConfig.CloudControllerManager.FeatureGates, version, fldPath.Child("cloudControllerManager", metal.CloudControllerManagerFeatureGatesKeyName))...)
+		if controlPlaneConfig.CloudControllerManager.PodPrefixSize < 0 {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("cloudControllerManager", "podPrefixSize"), controlPlaneConfig.CloudControllerManager.PodPrefixSize, "must be >= 0"))
+		}
 	}
 
 	// TODO add validation for IPs

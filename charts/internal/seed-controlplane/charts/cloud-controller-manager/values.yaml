@@ -24,3 +24,4 @@ vpa:
       memory: 10G
 
 configureCloudRoutes: false
+podPrefixSize: 0

@@ -49,6 +49,21 @@ var _ = Describe("ControlPlaneConfig validation", func() {
 				})),
 			))
 		})
+
+		It("should fail with negative podPrefixSize", func() {
+			controlPlane.CloudControllerManager = &apismetal.CloudControllerManagerConfig{
+				PodPrefixSize: -1,
+			}
+
+			errorList := ValidateControlPlaneConfig(controlPlane, "1.26.0", fldPath)
+
+			Expect(errorList).To(ConsistOf(
+				PointTo(MatchFields(IgnoreExtras, Fields{
+					"Type":  Equal(field.ErrorTypeInvalid),
+					"Field": Equal("cloudControllerManager.podPrefixSize"),
+				})),
+			))
+		})
 	})
 
 	Describe("#ValidateControlPlaneConfigUpdate", func() {

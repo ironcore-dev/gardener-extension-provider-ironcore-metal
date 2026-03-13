@@ -351,6 +351,9 @@ func getCCMChartValues(
 
 	if cpConfig.CloudControllerManager != nil {
 		values[metal.CloudControllerManagerFeatureGatesKeyName] = cpConfig.CloudControllerManager.FeatureGates
+		if cpConfig.CloudControllerManager.PodPrefixSize > 0 {
+			values["podPrefixSize"] = cpConfig.CloudControllerManager.PodPrefixSize
+		}
 	}
 
 	overlayEnabled, err := isOverlayEnabled(cluster.Shoot.Spec.Networking)
