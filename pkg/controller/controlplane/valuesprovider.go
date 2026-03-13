@@ -351,7 +351,7 @@ func getCCMChartValues(
 
 	if cpConfig.CloudControllerManager != nil {
 		values[metal.CloudControllerManagerFeatureGatesKeyName] = cpConfig.CloudControllerManager.FeatureGates
-		if cpConfig.CloudControllerManager.PodPrefixSize != 0 {
+		if cpConfig.CloudControllerManager.PodPrefixSize > 0 {
 			values["podPrefixSize"] = cpConfig.CloudControllerManager.PodPrefixSize
 		}
 	}
