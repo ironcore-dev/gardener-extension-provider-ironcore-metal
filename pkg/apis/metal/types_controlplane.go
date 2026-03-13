@@ -59,6 +59,10 @@ type CloudControllerManagerConfig struct {
 
 	// Networking contains configuration settings for CCM networking.
 	Networking *CloudControllerNetworking
+
+	// PodPrefixSize is the prefix size for pod CIDRs assigned to nodes.
+	// When non-zero, passed as --pod-prefix-size to the CCM.
+	PodPrefixSize int32
 }
 
 // LoadBalancerConfig contains configuration settings for the shoot loadbalancing.

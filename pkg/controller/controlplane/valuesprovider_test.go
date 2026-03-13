@@ -236,6 +236,7 @@ var _ = Describe("Valueprovider Reconcile", func() {
 									FeatureGates: map[string]bool{
 										"CustomResourceValidation": true,
 									},
+									PodPrefixSize: 112,
 								},
 								LoadBalancerConfig: &apismetal.LoadBalancerConfig{
 									MetalLoadBalancerConfig: &apismetal.MetalLoadBalancerConfig{
@@ -343,6 +344,7 @@ var _ = Describe("Valueprovider Reconcile", func() {
 					},
 					"podNetwork":           "10.0.0.0/16",
 					"configureCloudRoutes": true,
+					"podPrefixSize":        int32(112),
 				},
 			}))
 		})

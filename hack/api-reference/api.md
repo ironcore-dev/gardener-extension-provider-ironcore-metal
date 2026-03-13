@@ -644,6 +644,19 @@ CloudControllerNetworking
 <p>Networking contains configuration settings for CCM networking.</p>
 </td>
 </tr>
+<tr>
+<td>
+<code>podPrefixSize</code></br>
+<em>
+int32
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>PodPrefixSize is the prefix size for pod CIDRs assigned to nodes.
+When non-zero, passed as &ndash;pod-prefix-size to the CCM.</p>
+</td>
+</tr>
 </tbody>
 </table>
 <h3 id="ironcore-metal.provider.extensions.gardener.cloud/v1alpha1.CloudControllerNetworking">CloudControllerNetworking

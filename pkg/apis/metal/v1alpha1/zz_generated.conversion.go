@@ -458,6 +458,7 @@ func Convert_metal_CalicoIPPool_To_v1alpha1_CalicoIPPool(in *metal.CalicoIPPool,
 func autoConvert_v1alpha1_CloudControllerManagerConfig_To_metal_CloudControllerManagerConfig(in *CloudControllerManagerConfig, out *metal.CloudControllerManagerConfig, s conversion.Scope) error {
 	out.FeatureGates = *(*map[string]bool)(unsafe.Pointer(&in.FeatureGates))
 	out.Networking = (*metal.CloudControllerNetworking)(unsafe.Pointer(in.Networking))
+	out.PodPrefixSize = in.PodPrefixSize
 	return nil
 }
 
@@ -469,6 +470,7 @@ func Convert_v1alpha1_CloudControllerManagerConfig_To_metal_CloudControllerManag
 func autoConvert_metal_CloudControllerManagerConfig_To_v1alpha1_CloudControllerManagerConfig(in *metal.CloudControllerManagerConfig, out *CloudControllerManagerConfig, s conversion.Scope) error {
 	out.FeatureGates = *(*map[string]bool)(unsafe.Pointer(&in.FeatureGates))
 	out.Networking = (*CloudControllerNetworking)(unsafe.Pointer(in.Networking))
+	out.PodPrefixSize = in.PodPrefixSize
 	return nil
 }
 

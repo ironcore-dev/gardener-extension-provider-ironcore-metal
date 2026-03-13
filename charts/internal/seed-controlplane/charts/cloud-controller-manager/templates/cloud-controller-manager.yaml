@@ -47,6 +47,9 @@ spec:
             - --cluster-name={{ .Values.clusterName }}
             - --concurrent-service-syncs=10
             - --configure-cloud-routes={{ .Values.configureCloudRoutes }}
+        {{- if .Values.podPrefixSize }}
+            - --pod-prefix-size={{ .Values.podPrefixSize }}
+        {{- end }}
         {{- include "cloud-controller-manager.featureGates" . | trimSuffix "," | indent 8 }}
             - --kubeconfig=/var/run/secrets/gardener.cloud/shoot/generic-kubeconfig/kubeconfig
             - --authentication-kubeconfig=/var/run/secrets/gardener.cloud/shoot/generic-kubeconfig/kubeconfig
