@@ -36,16 +36,22 @@ func (a *actuator) Reconcile(ctx context.Context, log logr.Logger, infra *extens
 		}
 	}
 
-	if newNodes != nil || cluster.Shoot.Spec.Networking.Pods != nil || cluster.Shoot.Spec.Networking.Services != nil {
+	networking := cluster.Shoot.Spec.Networking
+	hasPods := networking != nil && networking.Pods != nil
+	hasServices := networking != nil && networking.Services != nil
+
+	if newNodes != nil || hasPods || hasServices {
 		if infra.Status.Networking == nil {
 			infra.Status.Networking = &extensionsv1alpha1.InfrastructureStatusNetworking{}
 		}
-		infra.Status.Networking.Nodes = newNodes
-		if cluster.Shoot.Spec.Networking.Pods != nil {
-			infra.Status.Networking.Pods = []string{*cluster.Shoot.Spec.Networking.Pods}
+		if newNodes != nil {
+			infra.Status.Networking.Nodes = newNodes
 		}
-		if cluster.Shoot.Spec.Networking.Services != nil {
-			infra.Status.Networking.Services = []string{*cluster.Shoot.Spec.Networking.Services}
+		if hasPods {
+			infra.Status.Networking.Pods = []string{*networking.Pods}
+		}
+		if hasServices {
+			infra.Status.Networking.Services = []string{*networking.Services}
 		}
 	}
 
