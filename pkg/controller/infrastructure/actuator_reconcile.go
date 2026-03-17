@@ -34,17 +34,19 @@ func (a *actuator) Reconcile(ctx context.Context, log logr.Logger, infra *extens
 			}
 			newNodes = append(newNodes, network.CIDR)
 		}
+	}
+
+	if newNodes != nil || cluster.Shoot.Spec.Networking.Pods != nil || cluster.Shoot.Spec.Networking.Services != nil {
 		if infra.Status.Networking == nil {
 			infra.Status.Networking = &extensionsv1alpha1.InfrastructureStatusNetworking{}
 		}
 		infra.Status.Networking.Nodes = newNodes
-	}
-
-	if cluster.Shoot.Spec.Networking.Pods != nil {
-		infra.Status.Networking.Pods = []string{*cluster.Shoot.Spec.Networking.Pods}
-	}
-	if cluster.Shoot.Spec.Networking.Services != nil {
-		infra.Status.Networking.Services = []string{*cluster.Shoot.Spec.Networking.Services}
+		if cluster.Shoot.Spec.Networking.Pods != nil {
+			infra.Status.Networking.Pods = []string{*cluster.Shoot.Spec.Networking.Pods}
+		}
+		if cluster.Shoot.Spec.Networking.Services != nil {
+			infra.Status.Networking.Services = []string{*cluster.Shoot.Spec.Networking.Services}
+		}
 	}
 
 	if err := a.client.Status().Patch(ctx, infra, client.MergeFrom(originalInfra)); err != nil {
