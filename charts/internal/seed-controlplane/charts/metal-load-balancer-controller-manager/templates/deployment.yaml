@@ -21,6 +21,7 @@ spec:
         gardener.cloud/role: controlplane
         app: kubernetes
         role: metal-load-balancer-controller-manager
+        networking.gardener.cloud/to-dns: allowed
         networking.resources.gardener.cloud/to-kube-apiserver-tcp-443: allowed
     spec:
       automountServiceAccountToken: false
