@@ -24,13 +24,11 @@ import (
 // NewNamespacedCloudProfileMutator returns a new instance of a NamespacedCloudProfile mutator.
 func NewNamespacedCloudProfileMutator(mgr manager.Manager) extensionswebhook.Mutator {
 	return &namespacedCloudProfile{
-		client:  mgr.GetClient(),
 		decoder: serializer.NewCodecFactory(mgr.GetScheme(), serializer.EnableStrict).UniversalDecoder(),
 	}
 }
 
 type namespacedCloudProfile struct {
-	client  client.Client
 	decoder runtime.Decoder
 }
 
@@ -41,9 +39,7 @@ func (p *namespacedCloudProfile) Mutate(_ context.Context, newObj, _ client.Obje
 		return fmt.Errorf("wrong object type %T", newObj)
 	}
 
-	// Ignore NamespacedCloudProfiles being deleted and wait for core mutator to patch the status.
-	if profile.DeletionTimestamp != nil || profile.Generation != profile.Status.ObservedGeneration ||
-		profile.Spec.ProviderConfig == nil || profile.Status.CloudProfileSpec.ProviderConfig == nil {
+	if shouldSkipMutation(profile) {
 		return nil
 	}
 
@@ -56,6 +52,8 @@ func (p *namespacedCloudProfile) Mutate(_ context.Context, newObj, _ client.Obje
 		return fmt.Errorf("could not decode providerConfig of namespacedCloudProfile status for '%s': %w", profile.Name, err)
 	}
 
+	// Merge machine images without transforming format.
+	// Mixed format (old image with architecture and new capabilityFlavors) is preserved per version.
 	statusConfig.MachineImages = mergeMachineImages(specConfig.MachineImages, statusConfig.MachineImages)
 
 	modifiedStatusConfig, err := json.Marshal(statusConfig)
@@ -65,6 +63,13 @@ func (p *namespacedCloudProfile) Mutate(_ context.Context, newObj, _ client.Obje
 	profile.Status.CloudProfileSpec.ProviderConfig.Raw = modifiedStatusConfig
 
 	return nil
+}
+
+func shouldSkipMutation(profile *gardencorev1beta1.NamespacedCloudProfile) bool {
+	return profile.DeletionTimestamp != nil ||
+		profile.Generation != profile.Status.ObservedGeneration ||
+		profile.Spec.ProviderConfig == nil ||
+		profile.Status.CloudProfileSpec.ProviderConfig == nil
 }
 
 func mergeMachineImages(specMachineImages, statusMachineImages []v1alpha1.MachineImages) []v1alpha1.MachineImages {
