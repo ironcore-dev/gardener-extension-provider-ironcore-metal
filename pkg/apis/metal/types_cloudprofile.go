@@ -4,6 +4,7 @@
 package metal
 
 import (
+	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -50,7 +51,22 @@ type MachineImageVersion struct {
 	// Version is the version of the image.
 	Version string
 	// Image is the path to the image.
-	Image string
+	Image string // TODO: deprecate once cloudprofiles are migrated to use CapabilityFlavors
 	// Architecture is the CPU architecture of the machine image.
-	Architecture *string
+	Architecture *string // TODO: deprecate once cloudprofiles are migrated to use CapabilityFlavors
+	// CapabilityFlavors is a collection of all images for that version with capabilities.
+	CapabilityFlavors []MachineImageFlavor
+}
+
+// GetCapabilities returns the Capabilities of a MachineImageFlavor
+func (f MachineImageFlavor) GetCapabilities() gardencorev1beta1.Capabilities {
+	return f.Capabilities
+}
+
+// MachineImageFlavor is a flavor of the machine image version that supports a specific set of capabilities.
+type MachineImageFlavor struct {
+	// Capabilities is the set of capabilities that are supported by the image in this flavor.
+	Capabilities gardencorev1beta1.Capabilities
+	// Image is the path to the image.
+	Image string
 }

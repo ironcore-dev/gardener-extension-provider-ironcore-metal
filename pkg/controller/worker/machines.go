@@ -11,10 +11,12 @@ import (
 	"github.com/gardener/gardener/extensions/pkg/controller"
 	"github.com/gardener/gardener/extensions/pkg/controller/worker"
 	genericworkeractuator "github.com/gardener/gardener/extensions/pkg/controller/worker/genericactuator"
+	gardencorev1beta1helper "github.com/gardener/gardener/pkg/api/core/v1beta1/helper"
 	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
 	"github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
 	machinecontrollerv1alpha1 "github.com/gardener/machine-controller-manager/pkg/apis/machine/v1alpha1"
 	"github.com/imdario/mergo"
+	"github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/apis/metal/helper"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -105,6 +107,8 @@ func (w *workerDelegate) generateMachineClassAndSecrets(ctx context.Context) ([]
 		machineClassSecrets []*corev1.Secret
 	)
 
+	capabilityDefinitions := helper.NormalizeCapabilityDefinitions(w.cluster.CloudProfile.Spec.MachineCapabilities)
+
 	for _, pool := range w.worker.Spec.Pools {
 
 		workerConfig := &metalv1alpha1.WorkerConfig{}
@@ -120,7 +124,14 @@ func (w *workerDelegate) generateMachineClassAndSecrets(ctx context.Context) ([]
 		}
 
 		arch := ptr.Deref(pool.Architecture, v1beta1constants.ArchitectureAMD64)
-		machineImage, err := w.findMachineImage(pool.MachineImage.Name, pool.MachineImage.Version, &arch)
+
+		machineTypeFromCloudProfile := gardencorev1beta1helper.FindMachineTypeByName(w.cluster.CloudProfile.Spec.MachineTypes, pool.MachineType)
+		if machineTypeFromCloudProfile == nil {
+			return nil, nil, fmt.Errorf("machine type %q not found in cloud profile %q", pool.MachineType, w.cluster.CloudProfile.Name)
+		}
+		machineTypeCapabilities := helper.NormalizeMachineTypeCapabilities(machineTypeFromCloudProfile.Capabilities, &arch, capabilityDefinitions)
+
+		machineImage, err := w.selectMachineImageForWorkerPool(pool.MachineImage.Name, pool.MachineImage.Version, &arch, machineTypeCapabilities, capabilityDefinitions)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -131,7 +142,7 @@ func (w *workerDelegate) generateMachineClassAndSecrets(ctx context.Context) ([]
 		}
 
 		machineClassProviderSpec := map[string]any{
-			metal.ImageFieldName:        machineImage,
+			metal.ImageFieldName:        machineImage.Image,
 			metal.ServerLabelsFieldName: serverLabels,
 		}
 

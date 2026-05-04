@@ -4,6 +4,7 @@
 package metal
 
 import (
+	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -46,7 +47,9 @@ type MachineImage struct {
 	// Image is the path to the image.
 	Image string
 	// Architecture is the CPU architecture of the machine image.
-	Architecture *string
+	Architecture *string // TODO: deprecate once cloudprofiles are migrated to use CapabilityFlavors
+	// Capabilities of the machine image.
+	Capabilities gardencorev1beta1.Capabilities
 }
 
 // IgnitionConfig contains ignition settings.

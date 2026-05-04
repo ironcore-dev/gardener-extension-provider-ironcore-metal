@@ -13,6 +13,8 @@ import (
 	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
 	secretsmanager "github.com/gardener/gardener/pkg/utils/secrets/manager"
 	fakesecretsmanager "github.com/gardener/gardener/pkg/utils/secrets/manager/fake"
+	apismetal "github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/apis/metal"
+	"github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/metal"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
@@ -20,15 +22,9 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/json"
-	"k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	fakeclient "sigs.k8s.io/controller-runtime/pkg/client/fake"
-	. "sigs.k8s.io/controller-runtime/pkg/envtest/komega"
-
-	apismetal "github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/apis/metal"
-	"github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/internal"
-	"github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/metal"
 )
 
 var _ = Describe("Valueprovider Reconcile", func() {
@@ -77,23 +73,19 @@ var _ = Describe("Valueprovider Reconcile", func() {
 					},
 				},
 			}
-			Expect(k8sClient.Create(ctx, cp)).To(Succeed())
 
-			By("ensuring that the provider ConfigMap has been created")
-			config := &corev1.ConfigMap{
+			ctrlCluster := &controller.Cluster{
 				ObjectMeta: metav1.ObjectMeta{
-					Namespace: ns.Name,
-					Name:      internal.CloudProviderConfigMapName,
+					Name: cluster.Name,
 				},
 			}
-			Eventually(Get(config)).Should(Succeed())
-			Expect(config.Data).To(HaveKey("cloudprovider.conf"))
-			cloudProviderConfig := map[string]any{}
-			Expect(yaml.Unmarshal([]byte(config.Data["cloudprovider.conf"]), &cloudProviderConfig)).NotTo(HaveOccurred())
-			Expect(cloudProviderConfig["clusterName"]).To(Equal(cluster.Name))
-			networkingConfig, ok := cloudProviderConfig[metal.CloudControllerManagerNetworkingKeyName].(map[string]any)
-			Expect(ok).To(BeTrue())
-			Expect(networkingConfig[metal.CloudControllerManagerNodeAddressesConfigKeyName]).To(BeTrue())
+			values, err := vp.GetConfigChartValues(ctx, cp, ctrlCluster)
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(values["clusterName"]).To(Equal(cluster.Name))
+			// Since Networking is nil in the cpConfig above, we don't expect it in the map
+			_, ok := values[metal.CloudControllerManagerNetworkingKeyName]
+			Expect(ok).To(BeFalse())
 		})
 	})
 
@@ -127,21 +119,17 @@ var _ = Describe("Valueprovider Reconcile", func() {
 					},
 				},
 			}
-			Expect(k8sClient.Create(ctx, cp)).To(Succeed())
 
-			By("ensuring that the provider ConfigMap has been created")
-			config := &corev1.ConfigMap{
+			ctrlCluster := &controller.Cluster{
 				ObjectMeta: metav1.ObjectMeta{
-					Namespace: ns.Name,
-					Name:      internal.CloudProviderConfigMapName,
+					Name: cluster.Name,
 				},
 			}
-			Eventually(Get(config)).Should(Succeed())
-			Expect(config.Data).To(HaveKey("cloudprovider.conf"))
-			cloudProviderConfig := map[string]any{}
-			Expect(yaml.Unmarshal([]byte(config.Data["cloudprovider.conf"]), &cloudProviderConfig)).NotTo(HaveOccurred())
-			Expect(cloudProviderConfig["clusterName"]).To(Equal(cluster.Name))
-			networkingConfig, ok := cloudProviderConfig[metal.CloudControllerManagerNetworkingKeyName].(map[string]any)
+			values, err := vp.GetConfigChartValues(ctx, cp, ctrlCluster)
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(values["clusterName"]).To(Equal(cluster.Name))
+			networkingConfig, ok := values[metal.CloudControllerManagerNetworkingKeyName].(map[string]any)
 			Expect(ok).To(BeTrue())
 			Expect(networkingConfig[metal.CloudControllerManagerNodeAddressesConfigKeyName]).To(BeFalse())
 		})
@@ -181,23 +169,20 @@ var _ = Describe("Valueprovider Reconcile", func() {
 					},
 				},
 			}
-			Expect(k8sClient.Create(ctx, cp)).To(Succeed())
 
-			By("ensuring that the provider ConfigMap has been created")
-			config := &corev1.ConfigMap{
+			ctrlCluster := &controller.Cluster{
 				ObjectMeta: metav1.ObjectMeta{
-					Namespace: ns.Name,
-					Name:      internal.CloudProviderConfigMapName,
+					Name: cluster.Name,
 				},
 			}
-			Eventually(Get(config)).Should(Succeed())
-			Expect(config.Data).To(HaveKey("cloudprovider.conf"))
-			cloudProviderConfig := map[string]any{}
-			Expect(yaml.Unmarshal([]byte(config.Data["cloudprovider.conf"]), &cloudProviderConfig)).NotTo(HaveOccurred())
-			Expect(cloudProviderConfig["clusterName"]).To(Equal(cluster.Name))
-			networkingConfig, ok := cloudProviderConfig[metal.CloudControllerManagerNetworkingKeyName].(map[string]any)
+			values, err := vp.GetConfigChartValues(ctx, cp, ctrlCluster)
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(values["clusterName"]).To(Equal(cluster.Name))
+			networkingConfig, ok := values[metal.CloudControllerManagerNetworkingKeyName].(map[string]any)
 			Expect(ok).To(BeTrue())
 			Expect(networkingConfig[metal.CloudControllerManagerNodeAddressesConfigKeyName]).To(BeTrue())
+
 			ipamKind, ok := networkingConfig[metal.CloudControllerManagerNodeIPAMKindKeyName].(map[string]any)
 			Expect(ok).To(BeTrue())
 			Expect(ipamKind).To(SatisfyAll(

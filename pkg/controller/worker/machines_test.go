@@ -9,6 +9,7 @@ import (
 
 	"github.com/gardener/gardener/extensions/pkg/controller/worker"
 	genericworkeractuator "github.com/gardener/gardener/extensions/pkg/controller/worker/genericactuator"
+	"github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
 	machinecontrollerv1alpha1 "github.com/gardener/machine-controller-manager/pkg/apis/machine/v1alpha1"
 	. "github.com/onsi/ginkgo/v2"
@@ -46,6 +47,18 @@ var _ = Describe("Machines", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		BeforeEach(func(ctx SpecContext) {
+			testCluster.CloudProfile.Spec.MachineCapabilities = []v1beta1.CapabilityDefinition{
+				{Name: "architecture", Values: []string{"amd64", "arm64"}},
+			}
+			testCluster.CloudProfile.Spec.MachineTypes = []v1beta1.MachineType{
+				{
+					Name: pool.MachineType,
+					Capabilities: v1beta1.Capabilities{
+						"architecture": []string{"amd64"},
+					},
+				},
+			}
+
 			// TODO: Fix machine pool hashing
 			workerPoolHash, err := worker.WorkerPoolHash(pool, testCluster, nil, nil, nil)
 			Expect(err).NotTo(HaveOccurred())
