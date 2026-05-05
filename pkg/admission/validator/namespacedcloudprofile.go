@@ -116,10 +116,12 @@ func (p *namespacedCloudProfile) validateMachineImages(providerConfig *apismetal
 			continue
 		}
 		for _, version := range machineImage.Versions {
+			_, versionExistsInParent := parentImages.GetImageVersion(machineImage.Name, version.Version)
+
 			if len(capabilityDefinitions) == 0 {
 				// check that each architecture defined has a corresponding entry in the providerConfig
 				for _, expectedArchitecture := range version.Architectures {
-					if _, exists := providerImages.GetImageVersion(machineImage.Name, validation.VersionArchitectureKey(version.Version, expectedArchitecture)); !existsInParent && !exists {
+					if _, exists := providerImages.GetImageVersion(machineImage.Name, validation.VersionArchitectureKey(version.Version, expectedArchitecture)); !versionExistsInParent && !exists {
 						allErrs = append(allErrs, field.Required(imagesPath,
 							fmt.Sprintf("machine image version %s@%s and architecture: %q is not defined in the NamespacedCloudProfile providerConfig",
 								machineImage.Name, version.Version, expectedArchitecture),
@@ -130,10 +132,13 @@ func (p *namespacedCloudProfile) validateMachineImages(providerConfig *apismetal
 				// check that each capabilityFlavor defined has a corresponding entry in the providerConfig
 				// Support mixed format: group provider versions by version string
 				providerVersions, versionExists := providerVersionsMap[machineImage.Name][version.Version]
-				if !versionExists || len(providerVersions) == 0 {
+				if !versionExistsInParent && (!versionExists || len(providerVersions) == 0) {
 					allErrs = append(allErrs, field.Required(imagesPath,
 						fmt.Sprintf("machine image version %s@%s is not defined in the NamespacedCloudProfile providerConfig", machineImage.Name, version.Version),
 					))
+					continue
+				}
+				if versionExistsInParent {
 					continue
 				}
 				allErrs = append(allErrs, validateMachineImageCapabilitiesMixed(machineImage, version, providerVersions, capabilityDefinitions, imagesPath)...)

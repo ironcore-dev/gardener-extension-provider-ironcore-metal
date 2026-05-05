@@ -104,7 +104,7 @@ func FindImageInCloudProfile(
 			return &bestMatch, nil
 		}
 	}
-	return nil, fmt.Errorf("could not find an image for name %q and architecture %q in version %q", imageName, *workerArchitecture, imageVersion)
+	return nil, fmt.Errorf("could not find an image for name %q in version %q", imageName, imageVersion)
 }
 
 // convertLegacyVersionsToCapabilityFlavors converts old format (image with architecture) versions

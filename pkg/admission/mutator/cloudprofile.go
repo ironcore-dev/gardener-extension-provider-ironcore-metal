@@ -79,22 +79,26 @@ func overwriteMachineImageCapabilityFlavors(profile *gardencorev1beta1.CloudProf
 				continue
 			}
 
-			// Check if any version entry uses new format (capabilityFlavors)
-			// If so, use that; otherwise convert old format entries to capability flavors
-			var capabilityFlavors []gardencorev1beta1.MachineImageFlavor
+			var (
+				capabilityFlavors []gardencorev1beta1.MachineImageFlavor
+				legacyVersions    []v1alpha1.MachineImageVersion
+			)
+
+			// Collect both new format flavors and legacy versions without dropping any siblings
 			for _, pv := range providerVersions {
 				if len(pv.CapabilityFlavors) > 0 {
-					// New format: use capabilityFlavors directly
-					capabilityFlavors = convertCapabilityFlavors(pv.CapabilityFlavors)
-					break
+					capabilityFlavors = append(capabilityFlavors, convertCapabilityFlavors(pv.CapabilityFlavors)...)
+					continue
 				}
+				legacyVersions = append(legacyVersions, pv)
 			}
 
-			if len(capabilityFlavors) == 0 {
-				// Old format: convert all image+architecture entries to capability flavors
-				capabilityFlavors = convertVersionsToCapabilityFlavors(providerVersions)
+			// Convert and append any legacy formats found
+			if len(legacyVersions) > 0 {
+				capabilityFlavors = append(capabilityFlavors, convertVersionsToCapabilityFlavors(legacyVersions)...)
 			}
 
+			// Assign the accumulated flavors back to the CloudProfile
 			profile.Spec.MachineImages[imageIdx].Versions[versionIdx].CapabilityFlavors = capabilityFlavors
 		}
 	}

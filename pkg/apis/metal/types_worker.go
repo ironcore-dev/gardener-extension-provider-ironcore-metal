@@ -47,7 +47,7 @@ type MachineImage struct {
 	// Image is the path to the image.
 	Image string
 	// Architecture is the CPU architecture of the machine image.
-	Architecture *string // TODO: deprecate once cloudprofiles are migrated to use CapabilityFlavors
+	Architecture *string // TODO: deprecate once cloudprofiles are migrated to use capabilities
 	// Capabilities of the machine image.
 	Capabilities gardencorev1beta1.Capabilities
 }

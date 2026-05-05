@@ -75,7 +75,8 @@ var _ = Describe("NamespacedCloudProfile Mutator", func() {
 				namespacedCloudProfile.Status.CloudProfileSpec.ProviderConfig = &runtime.RawExtension{Raw: []byte(`{
 "apiVersion":"ironcore-metal.provider.extensions.gardener.cloud/v1alpha1",
 "kind":"CloudProfileConfig",
-{"name":"gardenlinux","versions":[
+"machineImages":[
+  {"name":"gardenlinux","versions":[
       {"version":"1.0","image":"local/image-1.0-amd64","architecture":"amd64"},
       {"version":"1.0","image":"local/image-1.0-arm64","architecture":"arm64"}
   ]}
@@ -107,7 +108,7 @@ var _ = Describe("NamespacedCloudProfile Mutator", func() {
 					}),
 					MatchFields(IgnoreExtras, Fields{
 						"Name":     Equal("ubuntu"),
-						"Versions": ContainElements(apismetal.MachineImageVersion{Version: "2.0", Image: "local/ubuntu-2.0-amd64", Architecture: ptr.To("amd64")}),					}),
+						"Versions": ContainElements(apismetal.MachineImageVersion{Version: "2.0", Image: "local/ubuntu-2.0-amd64", Architecture: ptr.To("amd64")})}),
 				))
 			})
 		})
@@ -143,7 +144,7 @@ var _ = Describe("NamespacedCloudProfile Mutator", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(mergedConfig.MachineImages).To(ConsistOf(
 				MatchFields(IgnoreExtras, Fields{
-					"Name": Equal("gardenlinux"),
+					"Name": Equal("image-1"),
 					"Versions": ContainElements(
 						apismetal.MachineImageVersion{Version: "1.0",
 							CapabilityFlavors: []apismetal.MachineImageFlavor{{
@@ -165,7 +166,7 @@ var _ = Describe("NamespacedCloudProfile Mutator", func() {
 					),
 				}),
 				MatchFields(IgnoreExtras, Fields{
-					"Name": Equal("ubuntu"),
+					"Name": Equal("image-2"),
 					"Versions": ContainElements(
 						apismetal.MachineImageVersion{Version: "2.0",
 							CapabilityFlavors: []apismetal.MachineImageFlavor{{

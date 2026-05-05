@@ -13,7 +13,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-
 	apiv1alpha1 "github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/apis/metal/v1alpha1"
 )
 
@@ -71,9 +70,9 @@ var _ = Describe("MachinesImages", func() {
 				},
 				MachineImages: []apiv1alpha1.MachineImage{
 					{
-						Name:         "my-os",
-						Version:      "1.0",
-						Image:        "registry/my-os",
+						Name:    "my-os",
+						Version: "1.0",
+						Image:   "registry/my-os",
 						Capabilities: v1beta1.Capabilities{
 							"architecture": {"amd64"},
 						},

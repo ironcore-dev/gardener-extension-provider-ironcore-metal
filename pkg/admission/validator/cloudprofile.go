@@ -39,7 +39,7 @@ func (cp *cloudProfileValidator) Validate(_ context.Context, newObj, _ client.Ob
 	}
 
 	if cloudProfile.Spec.ProviderConfig == nil {
-		return field.Required(specPath.Child("providerConfig"), "providerConfig must be set for GCP cloud profiles")
+		return field.Required(specPath.Child("providerConfig"), "providerConfig must be set for Ironcore cloud profiles")
 	}
 
 	cpConfig, err := admission.DecodeCloudProfileConfig(cp.decoder, cloudProfile.Spec.ProviderConfig)

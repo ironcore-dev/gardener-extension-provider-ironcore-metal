@@ -52,10 +52,10 @@ type MachineImageVersion struct {
 	Version string `json:"version"`
 	// Image is the path to the image.
 	// +optional
-	Image string `json:"image"` // TODO: deprecate once cloudprofiles are migrated to use CapabilityFlavors
+	Image string `json:"image"` // TODO: deprecate once cloudprofiles are migrated to use capabilities
 	// Architecture is the CPU architecture of the machine image.
 	// +optional
-	Architecture *string `json:"architecture,omitempty"` // TODO: deprecate once cloudprofiles are migrated to use CapabilityFlavors
+	Architecture *string `json:"architecture,omitempty"` // TODO: deprecate once cloudprofiles are migrated to use capabilities
 	// CapabilityFlavors is a collection of all images for that version with capabilities.
 	CapabilityFlavors []MachineImageFlavor `json:"capabilityFlavors,omitempty"`
 }

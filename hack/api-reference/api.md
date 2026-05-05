@@ -1052,7 +1052,7 @@ string
 </tr>
 <tr>
 <td>
-<code>Architecture</code></br>
+<code>architecture</code></br>
 <em>
 string
 </em>
@@ -1064,7 +1064,7 @@ string
 </tr>
 <tr>
 <td>
-<code>Capabilities</code></br>
+<code>capabilities</code></br>
 <em>
 github.com/gardener/gardener/pkg/apis/core/v1beta1.Capabilities
 </em>

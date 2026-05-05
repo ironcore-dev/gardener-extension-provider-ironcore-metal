@@ -88,7 +88,7 @@ var _ = Describe("CloudProfile Mutator", func() {
 "apiVersion":"gcp.provider.extensions.gardener.cloud/v1alpha1",
 "kind":"CloudProfileConfig",
 "machineImages":[
-  {"name":"image-1","versions":[{"version":"1.1","image":"local/image:1.1"}]
+  {"name":"image-1","versions":[{"version":"1.1","image":"local/image:1.1"}]}
 ]}`)}
 				expectedProfileSpec := cloudProfile.Spec.DeepCopy()
 				Expect(cloudProfileMutator.Mutate(ctx, cloudProfile, nil)).To(Succeed())
