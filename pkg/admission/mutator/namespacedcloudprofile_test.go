@@ -77,8 +77,8 @@ var _ = Describe("NamespacedCloudProfile Mutator", func() {
 "kind":"CloudProfileConfig",
 "machineImages":[
   {"name":"gardenlinux","versions":[
-      {"version":"1.0","image":"local/image-1.0-amd64","architecture":"amd64"},
-      {"version":"1.0","image":"local/image-1.0-arm64","architecture":"arm64"}
+      {"version":"1.0-amd64,"image":"local/image-1.0-amd64","architecture":"amd64"},
+      {"version":"1.0-arm64","image":"local/image-1.0-arm64","architecture":"arm64"}
   ]}
 ]}`)}
 				namespacedCloudProfile.Spec.ProviderConfig = &runtime.RawExtension{Raw: []byte(`{
@@ -101,8 +101,8 @@ var _ = Describe("NamespacedCloudProfile Mutator", func() {
 					MatchFields(IgnoreExtras, Fields{
 						"Name": Equal("gardenlinux"),
 						"Versions": ContainElements(
-							apismetal.MachineImageVersion{Version: "1.0", Image: "local/image-1.0-amd64", Architecture: ptr.To("amd64")},
-							apismetal.MachineImageVersion{Version: "1.0", Image: "local/image-1.0-arm64", Architecture: ptr.To("arm64")},
+							apismetal.MachineImageVersion{Version: "1.0-amd64", Image: "local/image-1.0-amd64", Architecture: ptr.To("amd64")},
+							apismetal.MachineImageVersion{Version: "1.0-arm64", Image: "local/image-1.0-arm64", Architecture: ptr.To("arm64")},
 							apismetal.MachineImageVersion{Version: "1.1", Image: "local/image-1.1-arm64", Architecture: ptr.To("arm64")},
 						),
 					}),

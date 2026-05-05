@@ -36,9 +36,13 @@ func NormalizeCapabilityDefinitions(capabilityDefinitions []gardencorev1beta1.Ca
 // 2. If capabilityDefinitions has exactly one architecture value, use that value
 // 3. Otherwise, use workerArchitecture (defaulting to amd64)
 func NormalizeMachineTypeCapabilities(capabilities gardencorev1beta1.Capabilities, workerArchitecture *string, capabilityDefinitions []gardencorev1beta1.CapabilityDefinition) gardencorev1beta1.Capabilities {
-	if capabilities == nil {
-		capabilities = make(gardencorev1beta1.Capabilities)
+	// Work on a copy to avoid mutating the caller's map.
+	normalized := make(gardencorev1beta1.Capabilities, len(capabilities)+1)
+	for k, v := range capabilities {
+		normalized[k] = v
 	}
+	capabilities = normalized
+
 	// If architecture capability is already present, return as-is
 	if _, hasArch := capabilities[v1beta1constants.ArchitectureName]; hasArch {
 		return capabilities

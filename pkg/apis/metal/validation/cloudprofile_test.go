@@ -179,7 +179,7 @@ var _ = Describe("CloudProfileConfig validation", func() {
 			Expect(errorList).To(ConsistOf(
 				PointTo(MatchFields(IgnoreExtras, Fields{
 					"Type":   Equal(field.ErrorTypeRequired),
-					"Detail": ContainSubstring("[arm64]] is not defined in the providerConfig"),
+					"Detail": ContainSubstring("requires architecture \"arm64\" which is not defined in the providerConfig"),
 				})),
 			))
 		})
