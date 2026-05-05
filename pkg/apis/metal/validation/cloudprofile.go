@@ -401,7 +401,7 @@ func ValidateMissingArchitectures(
 					errPath = path.Child("capabilityFlavors").Index(idxCapability)
 				}
 				allErrs = append(allErrs, field.Required(errPath,
-					fmt.Sprintf("machine image version %s@%s and capabilityFlavor %v is not defined in the %s", imageName, versionStr, specCapabilitySet.Capabilities, errorMsgSuffix)))
+					fmt.Sprintf("machine image version %s@%s requires architecture %q which is not defined in the %s", imageName, versionStr, expectedArch, errorMsgSuffix)))
 			}
 		}
 	}
