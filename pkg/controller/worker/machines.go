@@ -16,7 +16,6 @@ import (
 	"github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
 	machinecontrollerv1alpha1 "github.com/gardener/machine-controller-manager/pkg/apis/machine/v1alpha1"
 	"github.com/imdario/mergo"
-	"github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/apis/metal/helper"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -24,6 +23,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 
+	"github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/apis/metal/helper"
 	metalv1alpha1 "github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/apis/metal/v1alpha1"
 	"github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/metal"
 )

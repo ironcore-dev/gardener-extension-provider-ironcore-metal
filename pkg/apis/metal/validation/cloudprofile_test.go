@@ -46,12 +46,12 @@ var _ = Describe("CloudProfileConfig validation", func() {
 								Version: "1.0.0",
 								CapabilityFlavors: []apismetal.MachineImageFlavor{
 									{
-										Image: "path/to/image-1234",
-										Capabilities: gardencorev1beta1.Capabilities{v1beta1constants.ArchitectureName:  []string{v1beta1constants.ArchitectureAMD64}},
+										Image:        "path/to/image-1234",
+										Capabilities: gardencorev1beta1.Capabilities{v1beta1constants.ArchitectureName: []string{v1beta1constants.ArchitectureAMD64}},
 									},
 									{
-										Image: "path/to/image-2345",
-										Capabilities: gardencorev1beta1.Capabilities{v1beta1constants.ArchitectureName:  []string{v1beta1constants.ArchitectureAMD64}},
+										Image:        "path/to/image-2345",
+										Capabilities: gardencorev1beta1.Capabilities{v1beta1constants.ArchitectureName: []string{v1beta1constants.ArchitectureAMD64}},
 									},
 								},
 							},
@@ -69,12 +69,12 @@ var _ = Describe("CloudProfileConfig validation", func() {
 						{
 							ExpirableVersion: core.ExpirableVersion{Version: "1.0.0"},
 							CapabilityFlavors: []core.MachineImageFlavor{
-								{Capabilities: core.Capabilities{v1beta1constants.ArchitectureName:  []string{v1beta1constants.ArchitectureAMD64}}},
-								{Capabilities: core.Capabilities{v1beta1constants.ArchitectureName:  []string{v1beta1constants.ArchitectureAMD64}}},
+								{Capabilities: core.Capabilities{v1beta1constants.ArchitectureName: []string{v1beta1constants.ArchitectureAMD64}}},
+								{Capabilities: core.Capabilities{v1beta1constants.ArchitectureName: []string{v1beta1constants.ArchitectureAMD64}}},
 							},
 						},
 						{
-							ExpirableVersion:  core.ExpirableVersion{Version: "1.0.1"},
+							ExpirableVersion: core.ExpirableVersion{Version: "1.0.1"},
 							CapabilityFlavors: []core.MachineImageFlavor{
 								{Capabilities: core.Capabilities{v1beta1constants.ArchitectureName: []string{v1beta1constants.ArchitectureAMD64}}},
 								{Capabilities: core.Capabilities{v1beta1constants.ArchitectureName: []string{v1beta1constants.ArchitectureARM64}}},
@@ -95,8 +95,8 @@ var _ = Describe("CloudProfileConfig validation", func() {
 						Versions: []apismetal.MachineImageVersion{
 							{
 								Version:           "1.0.0",
-								Image:             "path/to/image-old", // old format
-								Architecture:      ptr.To(v1beta1constants.ArchitectureAMD64), // old format
+								Image:             "path/to/image-old",                                          // old format
+								Architecture:      ptr.To(v1beta1constants.ArchitectureAMD64),                   // old format
 								CapabilityFlavors: []apismetal.MachineImageFlavor{{Image: "path/to/image-new"}}, // new format
 							},
 						},

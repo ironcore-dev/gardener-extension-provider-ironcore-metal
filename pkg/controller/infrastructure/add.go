@@ -39,7 +39,7 @@ func AddToManagerWithOptions(ctx context.Context, mgr manager.Manager, opts AddO
 		ControllerOptions: opts.Controller,
 		Predicates:        infrastructure.DefaultPredicates(ctx, mgr, opts.IgnoreOperationAnnotation),
 		Type:              metal.Type,
-		ExtensionClasses:    opts.ExtensionClasses,
+		ExtensionClasses:  opts.ExtensionClasses,
 	})
 }
 

@@ -15,11 +15,11 @@ import (
 	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
 	"github.com/gardener/gardener/pkg/utils"
 	gutil "github.com/gardener/gardener/pkg/utils/gardener"
-	"github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/apis/metal/helper"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/utils/ptr"
 
 	apismetal "github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/apis/metal"
+	"github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/apis/metal/helper"
 )
 
 // ValidateCloudProfileConfig validates a CloudProfileConfig object.

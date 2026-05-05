@@ -52,9 +52,9 @@ type MachineImage struct {
 	Image string `json:"image"`
 	// Architecture is the CPU architecture of the machine image.
 	// +optional
-	Architecture *string // TODO: deprecate once cloudprofiles are migrated to use CapabilityFlavors
+	Architecture *string `json:"architecture,omitempty"` // TODO: deprecate once cloudprofiles are migrated to use capabilities
 	// Capabilities of the machine image.
-	Capabilities gardencorev1beta1.Capabilities
+	Capabilities gardencorev1beta1.Capabilities `json:"capabilities,omitempty"`
 }
 
 // IgnitionConfig contains ignition settings.
