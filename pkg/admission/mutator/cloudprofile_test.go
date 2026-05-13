@@ -85,7 +85,7 @@ var _ = Describe("CloudProfile Mutator", func() {
 
 			It("should succeed and not modify the CloudProfile", func() {
 				cloudProfile.Spec.ProviderConfig = &runtime.RawExtension{Raw: []byte(`{
-"apiVersion":"gcp.provider.extensions.gardener.cloud/v1alpha1",
+"apiVersion":"ironcore-metal.provider.extensions.gardener.cloud/v1alpha1",
 "kind":"CloudProfileConfig",
 "machineImages":[
   {"name":"image-1","versions":[{"version":"1.1","image":"local/image:1.1"}]}
@@ -133,7 +133,7 @@ var _ = Describe("CloudProfile Mutator", func() {
 ]`
 
 				cloudProfile.Spec.ProviderConfig = &runtime.RawExtension{Raw: []byte(fmt.Sprintf(`{
-"apiVersion":"gcp.provider.extensions.gardener.cloud/v1alpha1",
+"apiVersion":"ironcore-metal.provider.extensions.gardener.cloud/v1alpha1",
 "kind":"CloudProfileConfig",
 "machineImages":[
   {"name":"os-1","versions":[
@@ -195,7 +195,7 @@ var _ = Describe("CloudProfile Mutator", func() {
 					},
 				}
 				cloudProfile.Spec.ProviderConfig = &runtime.RawExtension{Raw: []byte(fmt.Sprintf(`{
-"apiVersion":"gcp.provider.extensions.gardener.cloud/v1alpha1",
+"apiVersion":"ironcore-metal.provider.extensions.gardener.cloud/v1alpha1",
 "kind":"CloudProfileConfig",
 "machineImages":[
   {"name":"os-1","versions":[
@@ -274,7 +274,7 @@ var _ = Describe("CloudProfile Mutator", func() {
 				}
 				// Mix of new format and old format in providerConfig
 				cloudProfile.Spec.ProviderConfig = &runtime.RawExtension{Raw: []byte(`{
-"apiVersion":"gcp.provider.extensions.gardener.cloud/v1alpha1",
+"apiVersion":"ironcore-metal.provider.extensions.gardener.cloud/v1alpha1",
 "kind":"CloudProfileConfig",
 "machineImages":[
   {"name":"os-1","versions":[
