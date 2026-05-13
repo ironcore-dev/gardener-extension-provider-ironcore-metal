@@ -19,6 +19,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/utils/ptr"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	fakeclient "sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	"github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/admission/mutator"
@@ -28,6 +30,7 @@ import (
 
 var _ = Describe("NamespacedCloudProfile Mutator", func() {
 	var (
+		fakeClient  client.Client
 		fakeManager manager.Manager
 		namespace   string
 		ctx         = context.Background()
@@ -41,7 +44,9 @@ var _ = Describe("NamespacedCloudProfile Mutator", func() {
 		scheme := runtime.NewScheme()
 		utilruntime.Must(install.AddToScheme(scheme))
 		utilruntime.Must(v1beta1.AddToScheme(scheme))
+		fakeClient = fakeclient.NewClientBuilder().WithScheme(scheme).Build()
 		fakeManager = &test.FakeManager{
+			Client: fakeClient,
 			Scheme: scheme,
 		}
 		namespace = "garden-dev"
@@ -77,7 +82,7 @@ var _ = Describe("NamespacedCloudProfile Mutator", func() {
 "kind":"CloudProfileConfig",
 "machineImages":[
   {"name":"gardenlinux","versions":[
-      {"version":"1.0-amd64,"image":"local/image-1.0-amd64","architecture":"amd64"},
+      {"version":"1.0-amd64","image":"local/image-1.0-amd64","architecture":"amd64"},
       {"version":"1.0-arm64","image":"local/image-1.0-arm64","architecture":"arm64"}
   ]}
 ]}`)}
@@ -171,11 +176,240 @@ var _ = Describe("NamespacedCloudProfile Mutator", func() {
 						apismetal.MachineImageVersion{Version: "2.0",
 							CapabilityFlavors: []apismetal.MachineImageFlavor{{
 								Capabilities: v1beta1.Capabilities{"architecture": []string{"amd64"}},
-								Image:        "local/ubuntu:2.0",
+								Image:        "local/image:2.0",
 							}},
 						}),
 				}),
 			))
+		})
+
+		Describe("spec capabilityFlavors mutation", func() {
+			It("should populate capabilityFlavors on spec.machineImages when parent has machineCapabilities", func() {
+				Expect(fakeClient.Create(ctx, &v1beta1.CloudProfile{
+					ObjectMeta: metav1.ObjectMeta{Name: "parent-profile"},
+					Spec: v1beta1.CloudProfileSpec{
+						MachineCapabilities: []v1beta1.CapabilityDefinition{{
+							Name:   "architecture",
+							Values: []string{"amd64", "arm64"},
+						}},
+					},
+				})).To(Succeed())
+
+				namespacedCloudProfile.Spec.Parent = v1beta1.CloudProfileReference{
+					Kind: "CloudProfile",
+					Name: "parent-profile",
+				}
+				namespacedCloudProfile.Spec.MachineImages = []v1beta1.MachineImage{
+					{
+						Name: "image-1",
+						Versions: []v1beta1.MachineImageVersion{
+							{ExpirableVersion: v1beta1.ExpirableVersion{Version: "1.0"}},
+						},
+					},
+				}
+				namespacedCloudProfile.Spec.ProviderConfig = &runtime.RawExtension{Raw: []byte(`{
+"apiVersion":"ironcore-metal.provider.extensions.gardener.cloud/v1alpha1",
+"kind":"CloudProfileConfig",
+"machineImages":[
+  {"name":"image-1","versions":[{"version":"1.0","capabilityFlavors":[
+    {"capabilities":{"architecture":["amd64"]},"image":"projects/my-project/global/images/image-1-amd64"},
+    {"capabilities":{"architecture":["arm64"]},"image":"projects/my-project/global/images/image-1-arm64"}
+  ]}]}
+]}`)}
+
+				Expect(namespacedCloudProfileMutator.Mutate(ctx, namespacedCloudProfile, nil)).To(Succeed())
+
+				Expect(namespacedCloudProfile.Spec.MachineImages[0].Versions[0].CapabilityFlavors).To(ConsistOf(
+					MatchFields(IgnoreExtras, Fields{
+						"Capabilities": Equal(v1beta1.Capabilities{"architecture": []string{"amd64"}}),
+					}),
+					MatchFields(IgnoreExtras, Fields{
+						"Capabilities": Equal(v1beta1.Capabilities{"architecture": []string{"arm64"}}),
+					}),
+				))
+			})
+
+			It("should convert old format to capabilityFlavors on spec.machineImages", func() {
+				Expect(fakeClient.Create(ctx, &v1beta1.CloudProfile{
+					ObjectMeta: metav1.ObjectMeta{Name: "parent-profile"},
+					Spec: v1beta1.CloudProfileSpec{
+						MachineCapabilities: []v1beta1.CapabilityDefinition{{
+							Name:   "architecture",
+							Values: []string{"amd64", "arm64"},
+						}},
+					},
+				})).To(Succeed())
+
+				namespacedCloudProfile.Spec.Parent = v1beta1.CloudProfileReference{
+					Kind: "CloudProfile",
+					Name: "parent-profile",
+				}
+				namespacedCloudProfile.Spec.MachineImages = []v1beta1.MachineImage{
+					{
+						Name: "image-1",
+						Versions: []v1beta1.MachineImageVersion{
+							{ExpirableVersion: v1beta1.ExpirableVersion{Version: "1.0"}},
+						},
+					},
+				}
+				namespacedCloudProfile.Spec.ProviderConfig = &runtime.RawExtension{Raw: []byte(`{
+"apiVersion":"ironcore-metal.provider.extensions.gardener.cloud/v1alpha1",
+"kind":"CloudProfileConfig",
+"machineImages":[
+  {"name":"image-1","versions":[
+    {"version":"1.0","image":"projects/my-project/global/images/image-1-amd64","architecture":"amd64"},
+    {"version":"1.0","image":"projects/my-project/global/images/image-1-arm64","architecture":"arm64"}
+  ]}
+]}`)}
+
+				Expect(namespacedCloudProfileMutator.Mutate(ctx, namespacedCloudProfile, nil)).To(Succeed())
+
+				Expect(namespacedCloudProfile.Spec.MachineImages[0].Versions[0].CapabilityFlavors).To(ConsistOf(
+					MatchFields(IgnoreExtras, Fields{
+						"Capabilities": Equal(v1beta1.Capabilities{"architecture": []string{"amd64"}}),
+					}),
+					MatchFields(IgnoreExtras, Fields{
+						"Capabilities": Equal(v1beta1.Capabilities{"architecture": []string{"arm64"}}),
+					}),
+				))
+			})
+
+			It("should skip spec mutation when parent has no machineCapabilities", func() {
+				Expect(fakeClient.Create(ctx, &v1beta1.CloudProfile{
+					ObjectMeta: metav1.ObjectMeta{Name: "parent-profile"},
+					Spec:       v1beta1.CloudProfileSpec{},
+				})).To(Succeed())
+
+				namespacedCloudProfile.Spec.Parent = v1beta1.CloudProfileReference{
+					Kind: "CloudProfile",
+					Name: "parent-profile",
+				}
+				namespacedCloudProfile.Spec.MachineImages = []v1beta1.MachineImage{
+					{
+						Name: "image-1",
+						Versions: []v1beta1.MachineImageVersion{
+							{ExpirableVersion: v1beta1.ExpirableVersion{Version: "1.0"}},
+						},
+					},
+				}
+				namespacedCloudProfile.Spec.ProviderConfig = &runtime.RawExtension{Raw: []byte(`{
+"apiVersion":"ironcore-metal.provider.extensions.gardener.cloud/v1alpha1",
+"kind":"CloudProfileConfig",
+"machineImages":[
+  {"name":"image-1","versions":[{"version":"1.0","image":"projects/my-project/global/images/image-1"}]}
+]}`)}
+
+				Expect(namespacedCloudProfileMutator.Mutate(ctx, namespacedCloudProfile, nil)).To(Succeed())
+
+				Expect(namespacedCloudProfile.Spec.MachineImages[0].Versions[0].CapabilityFlavors).To(BeNil())
+			})
+
+			It("should skip spec mutation when Spec.Parent.Name is empty", func() {
+				namespacedCloudProfile.Spec.MachineImages = []v1beta1.MachineImage{
+					{
+						Name: "image-1",
+						Versions: []v1beta1.MachineImageVersion{
+							{ExpirableVersion: v1beta1.ExpirableVersion{Version: "1.0"}},
+						},
+					},
+				}
+				namespacedCloudProfile.Spec.ProviderConfig = &runtime.RawExtension{Raw: []byte(`{
+"apiVersion":"ironcore-metal.provider.extensions.gardener.cloud/v1alpha1",
+"kind":"CloudProfileConfig",
+"machineImages":[
+  {"name":"image-1","versions":[{"version":"1.0","image":"projects/my-project/global/images/image-1"}]}
+]}`)}
+
+				Expect(namespacedCloudProfileMutator.Mutate(ctx, namespacedCloudProfile, nil)).To(Succeed())
+
+				Expect(namespacedCloudProfile.Spec.MachineImages[0].Versions[0].CapabilityFlavors).To(BeNil())
+			})
+
+			It("should skip spec mutation when Spec.MachineImages is empty", func() {
+				Expect(fakeClient.Create(ctx, &v1beta1.CloudProfile{
+					ObjectMeta: metav1.ObjectMeta{Name: "parent-profile"},
+					Spec: v1beta1.CloudProfileSpec{
+						MachineCapabilities: []v1beta1.CapabilityDefinition{{
+							Name:   "architecture",
+							Values: []string{"amd64"},
+						}},
+					},
+				})).To(Succeed())
+
+				namespacedCloudProfile.Spec.Parent = v1beta1.CloudProfileReference{
+					Kind: "CloudProfile",
+					Name: "parent-profile",
+				}
+				namespacedCloudProfile.Spec.ProviderConfig = &runtime.RawExtension{Raw: []byte(`{
+"apiVersion":"ironcore-metal.provider.extensions.gardener.cloud/v1alpha1",
+"kind":"CloudProfileConfig",
+"machineImages":[
+  {"name":"image-1","versions":[{"version":"1.0","image":"projects/my-project/global/images/image-1"}]}
+]}`)}
+
+				Expect(namespacedCloudProfileMutator.Mutate(ctx, namespacedCloudProfile, nil)).To(Succeed())
+			})
+
+			It("should handle mixed format (old + new) within same image across versions", func() {
+				Expect(fakeClient.Create(ctx, &v1beta1.CloudProfile{
+					ObjectMeta: metav1.ObjectMeta{Name: "parent-profile"},
+					Spec: v1beta1.CloudProfileSpec{
+						MachineCapabilities: []v1beta1.CapabilityDefinition{{
+							Name:   "architecture",
+							Values: []string{"amd64", "arm64"},
+						}},
+					},
+				})).To(Succeed())
+
+				namespacedCloudProfile.Spec.Parent = v1beta1.CloudProfileReference{
+					Kind: "CloudProfile",
+					Name: "parent-profile",
+				}
+				namespacedCloudProfile.Spec.MachineImages = []v1beta1.MachineImage{
+					{
+						Name: "image-1",
+						Versions: []v1beta1.MachineImageVersion{
+							{ExpirableVersion: v1beta1.ExpirableVersion{Version: "1.0"}},
+							{ExpirableVersion: v1beta1.ExpirableVersion{Version: "1.1"}},
+						},
+					},
+				}
+				// Version 1.0 uses new format, version 1.1 uses old format
+				namespacedCloudProfile.Spec.ProviderConfig = &runtime.RawExtension{Raw: []byte(`{
+"apiVersion":"ironcore-metal.provider.extensions.gardener.cloud/v1alpha1",
+"kind":"CloudProfileConfig",
+"machineImages":[
+  {"name":"image-1","versions":[
+    {"version":"1.0","capabilityFlavors":[
+      {"capabilities":{"architecture":["amd64"]},"image":"projects/my-project/global/images/image-1-amd64"},
+      {"capabilities":{"architecture":["arm64"]},"image":"projects/my-project/global/images/image-1-arm64"}
+    ]},
+    {"version":"1.1","image":"projects/my-project/global/images/image-1-v11-amd64","architecture":"amd64"},
+    {"version":"1.1","image":"projects/my-project/global/images/image-1-v11-arm64","architecture":"arm64"}
+  ]}
+]}`)}
+
+				Expect(namespacedCloudProfileMutator.Mutate(ctx, namespacedCloudProfile, nil)).To(Succeed())
+
+				// Version 1.0 - new format
+				Expect(namespacedCloudProfile.Spec.MachineImages[0].Versions[0].CapabilityFlavors).To(ConsistOf(
+					MatchFields(IgnoreExtras, Fields{
+						"Capabilities": Equal(v1beta1.Capabilities{"architecture": []string{"amd64"}}),
+					}),
+					MatchFields(IgnoreExtras, Fields{
+						"Capabilities": Equal(v1beta1.Capabilities{"architecture": []string{"arm64"}}),
+					}),
+				))
+				// Version 1.1 - old format converted
+				Expect(namespacedCloudProfile.Spec.MachineImages[0].Versions[1].CapabilityFlavors).To(ConsistOf(
+					MatchFields(IgnoreExtras, Fields{
+						"Capabilities": Equal(v1beta1.Capabilities{"architecture": []string{"amd64"}}),
+					}),
+					MatchFields(IgnoreExtras, Fields{
+						"Capabilities": Equal(v1beta1.Capabilities{"architecture": []string{"arm64"}}),
+					}),
+				))
+			})
 		})
 	})
 })
