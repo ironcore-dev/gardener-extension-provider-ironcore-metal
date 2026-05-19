@@ -389,6 +389,11 @@ func (in *InfrastructureConfig) DeepCopyInto(out *InfrastructureConfig) {
 		*out = make([]Networks, len(*in))
 		copy(*out, *in)
 	}
+	if in.MetalNamespace != nil {
+		in, out := &in.MetalNamespace, &out.MetalNamespace
+		*out = new(string)
+		**out = **in
+	}
 	return
 }
 

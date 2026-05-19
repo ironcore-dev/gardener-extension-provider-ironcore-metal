@@ -25,3 +25,6 @@ vpa:
 
 configureCloudRoutes: false
 podPrefixSize: 0
+
+workloadIdentity:
+  enabled: false

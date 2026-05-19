@@ -11,6 +11,7 @@ import (
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
 	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
+	securityv1alpha1constants "github.com/gardener/gardener/pkg/apis/security/v1alpha1/constants"
 	secretsmanager "github.com/gardener/gardener/pkg/utils/secrets/manager"
 	fakesecretsmanager "github.com/gardener/gardener/pkg/utils/secrets/manager/fake"
 	. "github.com/onsi/ginkgo/v2"
@@ -331,8 +332,109 @@ var _ = Describe("Valueprovider Reconcile", func() {
 					"podNetwork":           "10.0.0.0/16",
 					"configureCloudRoutes": true,
 					"podPrefixSize":        int32(112),
+					"workloadIdentity":     map[string]any{"enabled": false},
 				},
 			}))
+		})
+	})
+
+	Describe("#GetControlPlaneChartValues", func() {
+		It("should return workloadIdentity.enabled=true when the cloudprovider secret has the WI label", func(ctx SpecContext) {
+			// Patch the cloudprovider secret (already created by SetupTest) to add the WI label.
+			wiSecret := &corev1.Secret{}
+			Expect(k8sClient.Get(ctx, client.ObjectKey{Namespace: ns.Name, Name: v1beta1constants.SecretNameCloudProvider}, wiSecret)).To(Succeed())
+			patch := client.MergeFrom(wiSecret.DeepCopy())
+			if wiSecret.Labels == nil {
+				wiSecret.Labels = map[string]string{}
+			}
+			wiSecret.Labels[securityv1alpha1constants.LabelPurpose] = securityv1alpha1constants.LabelPurposeWorkloadIdentityTokenRequestor
+			Expect(k8sClient.Patch(ctx, wiSecret, patch)).To(Succeed())
+			DeferCleanup(func(ctx SpecContext) {
+				// Remove the label so other tests see the unmodified secret.
+				restore := client.MergeFrom(wiSecret.DeepCopy())
+				delete(wiSecret.Labels, securityv1alpha1constants.LabelPurpose)
+				Expect(k8sClient.Patch(ctx, wiSecret, restore)).To(Succeed())
+			})
+
+			cp := &extensionsv1alpha1.ControlPlane{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "control-plane",
+					Namespace: ns.Name,
+				},
+				Spec: extensionsv1alpha1.ControlPlaneSpec{
+					Region: "foo",
+					SecretRef: corev1.SecretReference{
+						Name:      "my-infra-creds",
+						Namespace: ns.Name,
+					},
+					DefaultSpec: extensionsv1alpha1.DefaultSpec{
+						Type: metal.Type,
+						ProviderConfig: &runtime.RawExtension{
+							Raw: encode(&metalapi.ControlPlaneConfig{
+								CloudControllerManager: &metalapi.CloudControllerManagerConfig{
+									FeatureGates: map[string]bool{
+										"CustomResourceValidation": true,
+									},
+								},
+							}),
+						},
+					},
+				},
+			}
+			providerCloudProfile := &metalapi.CloudProfileConfig{}
+			providerCloudProfileJson, err := json.Marshal(providerCloudProfile)
+			Expect(err).NotTo(HaveOccurred())
+			networkProviderConfig := &unstructured.Unstructured{Object: map[string]any{
+				"kind":       "FooNetworkConfig",
+				"apiVersion": "v1alpha1",
+				"overlay": map[string]any{
+					"enabled": false,
+				},
+			}}
+			networkProviderConfigData, err := runtime.Encode(unstructured.UnstructuredJSONScheme, networkProviderConfig)
+			Expect(err).NotTo(HaveOccurred())
+			cluster := &controller.Cluster{
+				CloudProfile: &gardencorev1beta1.CloudProfile{
+					Spec: gardencorev1beta1.CloudProfileSpec{
+						ProviderConfig: &runtime.RawExtension{
+							Raw: providerCloudProfileJson,
+						},
+					},
+				},
+				Shoot: &gardencorev1beta1.Shoot{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: ns.Name,
+						Name:      "my-shoot",
+					},
+					Spec: gardencorev1beta1.ShootSpec{
+						Networking: &gardencorev1beta1.Networking{
+							ProviderConfig: &runtime.RawExtension{Raw: networkProviderConfigData},
+							Pods:           ptr.To[string]("10.0.0.0/16"),
+						},
+						Kubernetes: gardencorev1beta1.Kubernetes{
+							Version: "1.26.0",
+						},
+					},
+				},
+				Seed: &gardencorev1beta1.Seed{
+					ObjectMeta: metav1.ObjectMeta{
+						Annotations: map[string]string{},
+					},
+				},
+			}
+
+			checksums := map[string]string{
+				metal.CloudProviderConfigName:            "abc",
+				v1beta1constants.SecretNameCloudProvider: "def",
+			}
+			values, err := vp.GetControlPlaneChartValues(ctx, cp, cluster, fakeSecretsManager, checksums, false)
+			Expect(err).NotTo(HaveOccurred())
+
+			ccmValues, ok := values["cloud-controller-manager"].(map[string]any)
+			Expect(ok).To(BeTrue())
+			wiValues, ok := ccmValues["workloadIdentity"].(map[string]any)
+			Expect(ok).To(BeTrue())
+			Expect(wiValues["enabled"]).To(BeTrue())
 		})
 	})
 

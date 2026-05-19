@@ -11,6 +11,8 @@ import (
 	extensionswebhook "github.com/gardener/gardener/extensions/pkg/webhook"
 	"github.com/gardener/gardener/pkg/apis/core"
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
+	"github.com/gardener/gardener/pkg/apis/security"
+	securityv1alpha1 "github.com/gardener/gardener/pkg/apis/security/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -31,7 +33,9 @@ type shoot struct {
 // NewShootValidator returns a new instance of a shoot validator.
 func NewShootValidator(mgr manager.Manager) extensionswebhook.Validator {
 	return &shoot{
-		decoder: serializer.NewCodecFactory(mgr.GetScheme(), serializer.EnableStrict).UniversalDecoder(),
+		client:         mgr.GetClient(),
+		decoder:        serializer.NewCodecFactory(mgr.GetScheme(), serializer.EnableStrict).UniversalDecoder(),
+		lenientDecoder: serializer.NewCodecFactory(mgr.GetScheme()).UniversalDecoder(),
 	}
 }
 
@@ -69,6 +73,7 @@ type validationContext struct {
 	infrastructureConfig *metalapi.InfrastructureConfig
 	controlPlaneConfig   *metalapi.ControlPlaneConfig
 	cloudProfile         *gardencorev1beta1.CloudProfile
+	isWorkloadIdentity   bool
 }
 
 func (s *shoot) validateContext(valContext *validationContext) field.ErrorList {
@@ -77,7 +82,7 @@ func (s *shoot) validateContext(valContext *validationContext) field.ErrorList {
 	)
 
 	allErrors = append(allErrors, metalvalidation.ValidateNetworking(valContext.shoot.Spec.Networking, networkPath)...)
-	allErrors = append(allErrors, metalvalidation.ValidateInfrastructureConfig(valContext.infrastructureConfig, valContext.shoot.Spec.Networking.Nodes, valContext.shoot.Spec.Networking.Pods, valContext.shoot.Spec.Networking.Services, infrastructureConfigPath)...)
+	allErrors = append(allErrors, metalvalidation.ValidateInfrastructureConfig(valContext.infrastructureConfig, valContext.shoot.Spec.Networking.Nodes, valContext.shoot.Spec.Networking.Pods, valContext.shoot.Spec.Networking.Services, valContext.isWorkloadIdentity, infrastructureConfigPath)...)
 	allErrors = append(allErrors, metalvalidation.ValidateWorkers(valContext.shoot.Spec.Provider.Workers, workersPath, &valContext.shoot.Spec)...)
 	allErrors = append(allErrors, metalvalidation.ValidateControlPlaneConfig(valContext.controlPlaneConfig, valContext.shoot.Spec.Kubernetes.Version, controlPlaneConfigPath)...)
 
@@ -125,6 +130,20 @@ func (s *shoot) validateUpdate(ctx context.Context, oldShoot, currentShoot *core
 
 }
 
+func isWorkloadIdentityShoot(ctx context.Context, c client.Client, shoot *core.Shoot) (bool, error) {
+	if shoot.Spec.CredentialsBindingName == nil {
+		return false, nil
+	}
+
+	cb := &security.CredentialsBinding{}
+	if err := c.Get(ctx, client.ObjectKey{Namespace: shoot.Namespace, Name: *shoot.Spec.CredentialsBindingName}, cb); err != nil {
+		return false, err
+	}
+
+	return cb.CredentialsRef.APIVersion == securityv1alpha1.SchemeGroupVersion.String() &&
+		cb.CredentialsRef.Kind == "WorkloadIdentity", nil
+}
+
 func newValidationContext(ctx context.Context, decoder runtime.Decoder, c client.Client, shoot *core.Shoot) (*validationContext, error) {
 	if shoot.Spec.Provider.InfrastructureConfig == nil {
 		return nil, field.Required(infrastructureConfigPath, "infrastructureConfig must be set for metal shoots")
@@ -151,10 +170,16 @@ func newValidationContext(ctx context.Context, decoder runtime.Decoder, c client
 		return nil, fmt.Errorf("providerConfig is not given for cloud profile %q", cloudProfile.Name)
 	}
 
+	isWorkloadIdentity, err := isWorkloadIdentityShoot(ctx, c, shoot)
+	if err != nil {
+		return nil, fmt.Errorf("unable to determine credentials binding type: %w", err)
+	}
+
 	return &validationContext{
 		shoot:                shoot,
 		infrastructureConfig: infrastructureConfig,
 		controlPlaneConfig:   controlPlaneConfig,
 		cloudProfile:         cloudProfile,
+		isWorkloadIdentity:   isWorkloadIdentity,
 	}, nil
 }

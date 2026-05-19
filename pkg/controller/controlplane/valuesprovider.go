@@ -223,7 +223,12 @@ func (vp *valuesProvider) GetControlPlaneChartValues(
 		}
 	}
 
-	return getControlPlaneChartValues(cpConfig, cp, cluster, secretsReader, checksums, scaledDown)
+	wiEnabled, err := metal.IsWorkloadIdentityEnabledForShoot(ctx, vp.client, cp.Namespace)
+	if err != nil {
+		return nil, fmt.Errorf("unable to determine if workload identity is enabled: %w", err)
+	}
+
+	return getControlPlaneChartValues(cpConfig, cp, cluster, secretsReader, checksums, scaledDown, wiEnabled)
 }
 
 // GetControlPlaneShootChartValues returns the values for the control plane shoot chart applied by the generic actuator.
@@ -274,11 +279,12 @@ func getControlPlaneChartValues(
 	secretsReader secretsmanager.Reader,
 	checksums map[string]string,
 	scaledDown bool,
+	workloadIdentityEnabled bool,
 ) (
 	map[string]any,
 	error,
 ) {
-	ccm, err := getCCMChartValues(cpConfig, cp, cluster, secretsReader, checksums, scaledDown)
+	ccm, err := getCCMChartValues(cpConfig, cp, cluster, secretsReader, checksums, scaledDown, workloadIdentityEnabled)
 	if err != nil {
 		return nil, err
 	}
@@ -319,6 +325,7 @@ func getCCMChartValues(
 	secretsReader secretsmanager.Reader,
 	checksums map[string]string,
 	scaledDown bool,
+	workloadIdentityEnabled bool,
 ) (map[string]any, error) {
 	serverSecret, found := secretsReader.Get(cloudControllerManagerServerName)
 	if !found {
@@ -361,6 +368,9 @@ func getCCMChartValues(
 		return nil, fmt.Errorf("failed to determine if overlay is enabled: %w", err)
 	}
 	values["configureCloudRoutes"] = !overlayEnabled
+	values["workloadIdentity"] = map[string]any{
+		"enabled": workloadIdentityEnabled,
+	}
 
 	return values, nil
 }

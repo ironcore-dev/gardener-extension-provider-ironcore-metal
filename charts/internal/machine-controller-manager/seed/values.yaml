@@ -8,6 +8,9 @@ podAnnotations: {}
 
 podLabels: {}
 
+workloadIdentity:
+  enabled: false
+
 providerName: provider-foo
 
 # injected by generic worker actuator
