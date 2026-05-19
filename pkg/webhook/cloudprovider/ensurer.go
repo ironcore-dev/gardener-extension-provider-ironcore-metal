@@ -55,6 +55,10 @@ func (e *ensurer) EnsureCloudProviderSecret(ctx context.Context, gctx gcontext.G
 		return fmt.Errorf("could not decode cluster object's providerConfig: %w", err)
 	}
 
+	if newCloudProviderSecret.Data == nil {
+		newCloudProviderSecret.Data = map[string][]byte{}
+	}
+
 	if metal.IsWorkloadIdentityCloudProviderSecret(newCloudProviderSecret) {
 		return e.ensureWorkloadIdentitySecret(cluster, cloudProfileConfig, newCloudProviderSecret)
 	}
