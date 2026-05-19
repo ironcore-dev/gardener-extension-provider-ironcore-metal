@@ -16,6 +16,9 @@ type InfrastructureConfig struct {
 
 	// Networks is the metal specific network configuration.
 	Networks []Networks
+
+	// MetalApiNamespace is the target namespace in the Metal-API cluster where resources will be provisioned.
+	MetalApiNamespace *string
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

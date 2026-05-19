@@ -923,6 +923,18 @@ by extra ignition.</p>
 <p>Networks is the metal specific network configuration.</p>
 </td>
 </tr>
+<tr>
+<td>
+<code>metalApiNamespace</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>MetalApiNamespace is the target namespace in the Metal-API cluster where resources will be provisioned.</p>
+</td>
+</tr>
 </tbody>
 </table>
 <h3 id="ironcore-metal.provider.extensions.gardener.cloud/v1alpha1.InfrastructureStatus">InfrastructureStatus

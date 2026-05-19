@@ -4,10 +4,12 @@
 package validation
 
 import (
+	"github.com/gardener/gardener/pkg/apis/security/v1alpha1/constants"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	gomegatypes "github.com/onsi/gomega/types"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var _ = Describe("Secret validation", func() {
@@ -48,4 +50,15 @@ var _ = Describe("Secret validation", func() {
 			},
 			Not(HaveOccurred())),
 	)
+
+	It("should accept workload identity cloudprovider secrets without legacy fields", func() {
+		secret := &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Labels: map[string]string{
+					constants.LabelPurpose: constants.LabelPurposeWorkloadIdentityTokenRequestor,
+				},
+			},
+		}
+		Expect(ValidateCloudProviderSecret(secret)).To(Succeed())
+	})
 })
