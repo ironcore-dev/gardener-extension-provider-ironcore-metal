@@ -192,6 +192,20 @@ var _ = Describe("Machines", func() {
 			},
 		}))
 	})
+
+	It("should set PoolName on each MachineDeployment to the worker pool name", func(ctx SpecContext) {
+		decoder := serializer.NewCodecFactory(k8sClient.Scheme(), serializer.EnableStrict).UniversalDecoder()
+		workerDelegate, err := NewWorkerDelegate(k8sClient, decoder, k8sClient.Scheme(), "", w, testCluster)
+		Expect(err).NotTo(HaveOccurred())
+
+		machineDeployments, err := workerDelegate.GenerateMachineDeployments(ctx)
+		Expect(err).NotTo(HaveOccurred())
+
+		for _, md := range machineDeployments {
+			Expect(md.PoolName).ToNot(BeEmpty(), "PoolName must not be empty for deployment %s", md.Name)
+			Expect(md.PoolName).To(Equal(pool.Name), "PoolName must match the worker pool name for deployment %s", md.Name)
+		}
+	})
 })
 
 func encodeMap(m map[string]any) []byte {
