@@ -93,6 +93,7 @@ func NewControllerManagerCommand(ctx context.Context) *cobra.Command {
 			metal.ProviderName,
 			genericactuator.ShootWebhooksResourceName,
 			genericactuator.ShootWebhookNamespaceSelector(metal.Type),
+			generalOpts,
 			webhookServerOptions,
 			webhookSwitches,
 		)
@@ -188,12 +189,12 @@ func NewControllerManagerCommand(ctx context.Context) *cobra.Command {
 			heartbeatCtrlOpts.Completed().Apply(&heartbeat.DefaultAddOptions)
 			infraCtrlOpts.Completed().Apply(&infrastructurecontroller.DefaultAddOptions.Controller)
 			workerCtrlOpts.Completed().Apply(&workercontroller.DefaultAddOptions.Controller)
-			reconcileOpts.Completed().Apply(&infrastructurecontroller.DefaultAddOptions.IgnoreOperationAnnotation, &infrastructurecontroller.DefaultAddOptions.ExtensionClass)
-			reconcileOpts.Completed().Apply(&workercontroller.DefaultAddOptions.IgnoreOperationAnnotation, &workercontroller.DefaultAddOptions.ExtensionClass)
+			reconcileOpts.Completed().Apply(&infrastructurecontroller.DefaultAddOptions.IgnoreOperationAnnotation, &infrastructurecontroller.DefaultAddOptions.ExtensionClasses)
+			reconcileOpts.Completed().Apply(&workercontroller.DefaultAddOptions.IgnoreOperationAnnotation, &workercontroller.DefaultAddOptions.ExtensionClasses)
 			workercontroller.DefaultAddOptions.GardenCluster = gardenCluster
 			workercontroller.DefaultAddOptions.SelfHostedShootCluster = generalOpts.Completed().SelfHostedShootCluster
 
-			if _, err := webhookOptions.Completed().AddToManager(ctx, mgr, nil, generalOpts.Completed().SelfHostedShootCluster); err != nil {
+			if _, err = webhookOptions.Completed().AddToManager(ctx, mgr, nil); err != nil {
 				return fmt.Errorf("could not add webhooks to manager: %w", err)
 			}
 			metalcontrolplane.DefaultAddOptions.WebhookServerNamespace = webhookOptions.Server.Namespace
