@@ -5,6 +5,7 @@ package worker
 
 import (
 	"context"
+	"fmt"
 
 	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
 	corev1 "k8s.io/api/core/v1"
@@ -17,6 +18,11 @@ func (w *workerDelegate) GetMachineControllerManagerChartValues(ctx context.Cont
 	namespace := &corev1.Namespace{}
 	if err := w.client.Get(ctx, client.ObjectKey{Name: w.worker.Namespace}, namespace); err != nil {
 		return nil, err
+	}
+
+	wiEnabled, err := metal.IsWorkloadIdentityEnabledForShoot(ctx, w.client, w.worker.Namespace)
+	if err != nil {
+		return nil, fmt.Errorf("unable to determine if workload identity is enabled: %w", err)
 	}
 
 	podLabels := map[string]any{
@@ -33,6 +39,9 @@ func (w *workerDelegate) GetMachineControllerManagerChartValues(ctx context.Cont
 			"uid": namespace.UID,
 		},
 		"podLabels": podLabels,
+		"workloadIdentity": map[string]any{
+			"enabled": wiEnabled,
+		},
 	}, nil
 }
 

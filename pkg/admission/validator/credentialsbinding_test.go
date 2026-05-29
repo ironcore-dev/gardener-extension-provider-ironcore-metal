@@ -118,6 +118,13 @@ var _ = Describe("CredentialsBinding validator", func() {
 			Expect(credentialsBindingValidator.Validate(ctx, credentialsBinding, nil)).To(Succeed())
 		})
 
+		It("should succeed when the CredentialsBinding references a WorkloadIdentity", func() {
+			credentialsBinding.CredentialsRef.APIVersion = "security.gardener.cloud/v1alpha1"
+			credentialsBinding.CredentialsRef.Kind = "WorkloadIdentity"
+			// No apiReader.EXPECT() — Get must NOT be called for WorkloadIdentity refs
+			Expect(credentialsBindingValidator.Validate(ctx, credentialsBinding, nil)).To(Succeed())
+		})
+
 		It("should return nil when the CredentialsBinding did not change", func() {
 			old := credentialsBinding.DeepCopy()
 
