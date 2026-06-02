@@ -7,12 +7,12 @@ import (
 	featurevalidation "github.com/gardener/gardener/pkg/utils/validation/features"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
-	apismetal "github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/apis/metal"
+	metalapi "github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/apis/metal"
 	"github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/metal"
 )
 
 // ValidateControlPlaneConfig validates a ControlPlaneConfig object.
-func ValidateControlPlaneConfig(controlPlaneConfig *apismetal.ControlPlaneConfig, version string, fldPath *field.Path) field.ErrorList {
+func ValidateControlPlaneConfig(controlPlaneConfig *metalapi.ControlPlaneConfig, version string, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if controlPlaneConfig.CloudControllerManager != nil {
@@ -28,16 +28,16 @@ func ValidateControlPlaneConfig(controlPlaneConfig *apismetal.ControlPlaneConfig
 }
 
 // ValidateControlPlaneConfigUpdate validates a ControlPlaneConfig object.
-func ValidateControlPlaneConfigUpdate(oldConfig, newConfig *apismetal.ControlPlaneConfig, fldPath *field.Path) field.ErrorList {
+func ValidateControlPlaneConfigUpdate(oldConfig, newConfig *metalapi.ControlPlaneConfig, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	return allErrs
 }
 
-func ValidateCalicoIPPoolAssignmentMode(mode apismetal.CalicoIPPoolAssignmentMode) bool {
-	return mode == apismetal.CalicoIPPoolAssignmentModeAutomatic || mode == apismetal.CalicoIPPoolAssignmentModeManual
+func ValidateCalicoIPPoolAssignmentMode(mode metalapi.CalicoIPPoolAssignmentMode) bool {
+	return mode == metalapi.CalicoIPPoolAssignmentModeAutomatic || mode == metalapi.CalicoIPPoolAssignmentModeManual
 }
 
-func ValidateCalicoIPPoolAllowedUses(mode apismetal.CalicoIPPoolAllowedUse) bool {
-	return mode == apismetal.CalicoIPPoolAllowedUseLoadBalancer || mode == apismetal.CalicoIPPoolAllowedUseTunnel || mode == apismetal.CalicoIPPoolAllowedUseWorkload
+func ValidateCalicoIPPoolAllowedUses(mode metalapi.CalicoIPPoolAllowedUse) bool {
+	return mode == metalapi.CalicoIPPoolAllowedUseLoadBalancer || mode == metalapi.CalicoIPPoolAllowedUseTunnel || mode == metalapi.CalicoIPPoolAllowedUseWorkload
 }

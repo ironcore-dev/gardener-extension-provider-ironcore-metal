@@ -12,7 +12,7 @@ import (
 	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
 	"k8s.io/utils/ptr"
 
-	apismetal "github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/apis/metal"
+	metalapi "github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/apis/metal"
 	"github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/apis/metal/v1alpha1"
 )
 
@@ -67,12 +67,12 @@ func NormalizeMachineTypeCapabilities(capabilities gardencorev1beta1.Capabilitie
 // Note: capabilityDefinitions and machineTypeCapabilities are expected to be normalized
 // by the caller using NormalizeCapabilityDefinitions() and NormalizeMachineTypeCapabilities()
 func FindImageInCloudProfile(
-	cloudProfileConfig *apismetal.CloudProfileConfig,
+	cloudProfileConfig *metalapi.CloudProfileConfig,
 	imageName, imageVersion string,
 	workerArchitecture *string,
 	machineTypeCapabilities gardencorev1beta1.Capabilities,
 	capabilityDefinitions []gardencorev1beta1.CapabilityDefinition,
-) (*apismetal.MachineImageFlavor, error) {
+) (*metalapi.MachineImageFlavor, error) {
 	if cloudProfileConfig == nil {
 		return nil, fmt.Errorf("cloud profile config is nil")
 	}
@@ -84,7 +84,7 @@ func FindImageInCloudProfile(
 		}
 
 		// Collect all versions with matching version string (mixed format support)
-		var matchingVersions []apismetal.MachineImageVersion
+		var matchingVersions []metalapi.MachineImageVersion
 		for _, version := range machineImage.Versions {
 			if imageVersion == version.Version {
 				matchingVersions = append(matchingVersions, version)
@@ -113,12 +113,12 @@ func FindImageInCloudProfile(
 
 // convertLegacyVersionsToCapabilityFlavors converts old format (image with architecture) versions
 // to capability flavors for mixed format support.
-func convertLegacyVersionsToCapabilityFlavors(versions []apismetal.MachineImageVersion) []apismetal.MachineImageFlavor {
-	var capabilityFlavors []apismetal.MachineImageFlavor
+func convertLegacyVersionsToCapabilityFlavors(versions []metalapi.MachineImageVersion) []metalapi.MachineImageFlavor {
+	var capabilityFlavors []metalapi.MachineImageFlavor
 	for _, version := range versions {
 		if version.Image != "" && len(version.CapabilityFlavors) == 0 {
 			arch := ptr.Deref(version.Architecture, v1beta1constants.ArchitectureAMD64)
-			capabilityFlavors = append(capabilityFlavors, apismetal.MachineImageFlavor{
+			capabilityFlavors = append(capabilityFlavors, metalapi.MachineImageFlavor{
 				Image: version.Image,
 				Capabilities: gardencorev1beta1.Capabilities{
 					v1beta1constants.ArchitectureName: []string{arch},
@@ -134,8 +134,8 @@ func convertLegacyVersionsToCapabilityFlavors(versions []apismetal.MachineImageV
 // GroupVersionsByVersionString groups all provider versions by their version string.
 // This is needed because the old format may have multiple entries for the same version
 // with different architectures (mixed format support).
-func GroupVersionsByVersionString(versions []apismetal.MachineImageVersion) map[string][]apismetal.MachineImageVersion {
-	result := make(map[string][]apismetal.MachineImageVersion)
+func GroupVersionsByVersionString(versions []metalapi.MachineImageVersion) map[string][]metalapi.MachineImageVersion {
+	result := make(map[string][]metalapi.MachineImageVersion)
 	for _, v := range versions {
 		result[v.Version] = append(result[v.Version], v)
 	}
@@ -157,7 +157,7 @@ func GroupV1alpha1VersionsByVersionString(versions []v1alpha1.MachineImageVersio
 // whose name, version and capabilities matches with the given ones. If no such entry is
 // found then an error will be returned.
 // Note: capabilityDefinitions and machineCapabilities are expected to be normalized by the caller.
-func FindImageInWorkerStatus(machineImages []apismetal.MachineImage, name string, version string, machineCapabilities gardencorev1beta1.Capabilities, capabilityDefinitions []gardencorev1beta1.CapabilityDefinition) (*apismetal.MachineImage, error) {
+func FindImageInWorkerStatus(machineImages []metalapi.MachineImage, name string, version string, machineCapabilities gardencorev1beta1.Capabilities, capabilityDefinitions []gardencorev1beta1.CapabilityDefinition) (*metalapi.MachineImage, error) {
 	for _, statusMachineImage := range machineImages {
 		if statusMachineImage.Name != name || statusMachineImage.Version != version {
 			continue

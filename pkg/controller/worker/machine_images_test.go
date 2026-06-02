@@ -19,7 +19,7 @@ import (
 var _ = Describe("MachinesImages", func() {
 	ns, _ := SetupTest()
 
-	It("should update the worker status with GEP-33 capabilities", func(ctx SpecContext) {
+	It("should update the worker status with capabilities", func(ctx SpecContext) {
 		By("defining and setting infrastructure status for worker")
 		infraStatus := &apiv1alpha1.InfrastructureStatus{
 			TypeMeta: metav1.TypeMeta{
@@ -29,7 +29,7 @@ var _ = Describe("MachinesImages", func() {
 		}
 		w.Spec.InfrastructureProviderStatus = &runtime.RawExtension{Object: infraStatus}
 
-		By("setting up GEP-33 capabilities and machine types in the test cluster")
+		By("setting up capabilities and machine types in the test cluster")
 		testCluster.CloudProfile.Spec.MachineCapabilities = []v1beta1.CapabilityDefinition{
 			{Name: "architecture", Values: []string{"amd64", "arm64"}},
 		}
@@ -88,7 +88,7 @@ var _ = Describe("MachinesImages", func() {
 	})
 
 	It("should return an error if no matching image is found for the requested architecture", func(ctx SpecContext) {
-		By("setting up GEP-33 capabilities with arm64 requirement")
+		By("setting up capabilities with arm64 requirement")
 		testCluster.CloudProfile.Spec.MachineCapabilities = []v1beta1.CapabilityDefinition{
 			{Name: "architecture", Values: []string{"amd64", "arm64"}},
 		}

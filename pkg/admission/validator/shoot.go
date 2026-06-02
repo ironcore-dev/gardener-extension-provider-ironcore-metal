@@ -18,7 +18,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	"github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/admission"
-	apismetal "github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/apis/metal"
+	metalapi "github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/apis/metal"
 	metalvalidation "github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/apis/metal/validation"
 )
 
@@ -66,8 +66,8 @@ var (
 
 type validationContext struct {
 	shoot                *core.Shoot
-	infrastructureConfig *apismetal.InfrastructureConfig
-	controlPlaneConfig   *apismetal.ControlPlaneConfig
+	infrastructureConfig *metalapi.InfrastructureConfig
+	controlPlaneConfig   *metalapi.ControlPlaneConfig
 	cloudProfile         *gardencorev1beta1.CloudProfile
 }
 

@@ -16,7 +16,7 @@ import (
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	apismetal "github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/apis/metal"
+	metalapi "github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/apis/metal"
 	"github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/apis/metal/helper"
 	apiv1alpha1 "github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/apis/metal/v1alpha1"
 )
@@ -24,7 +24,7 @@ import (
 // UpdateMachineImagesStatus updates the machine image status
 // with the used machine images for the `Worker` resource.
 func (w *workerDelegate) UpdateMachineImagesStatus(ctx context.Context) error {
-	var machineImages []apismetal.MachineImage
+	var machineImages []metalapi.MachineImage
 
 	capabilityDefinitions := helper.NormalizeCapabilityDefinitions(w.cluster.CloudProfile.Spec.MachineCapabilities)
 
@@ -62,8 +62,8 @@ func (w *workerDelegate) UpdateMachineImagesStatus(ctx context.Context) error {
 func (w *workerDelegate) selectMachineImageForWorkerPool(
 	name, version string, workerArchitecture *string, machineCapabilities gardencorev1beta1.Capabilities,
 	capabilityDefinitions []gardencorev1beta1.CapabilityDefinition,
-) (*apismetal.MachineImage, error) {
-	selectedMachineImage := &apismetal.MachineImage{
+) (*metalapi.MachineImage, error) {
+	selectedMachineImage := &metalapi.MachineImage{
 		Name:         name,
 		Version:      version,
 		Architecture: workerArchitecture,
@@ -75,7 +75,7 @@ func (w *workerDelegate) selectMachineImageForWorkerPool(
 	}
 	// Try to look up machine image in worker provider status as it was not found in componentconfig.
 	if providerStatus := w.worker.Status.ProviderStatus; providerStatus != nil {
-		workerStatus := &apismetal.WorkerStatus{}
+		workerStatus := &metalapi.WorkerStatus{}
 		if _, _, err := w.decoder.Decode(providerStatus.Raw, nil, workerStatus); err != nil {
 			return nil, fmt.Errorf("could not decode worker status of worker '%s': %w", client.ObjectKeyFromObject(w.worker), err)
 		}
@@ -88,8 +88,8 @@ func (w *workerDelegate) selectMachineImageForWorkerPool(
 
 // ensureUniformMachineImages ensures that all machine images are in the same format, either with or without Capabilities.
 // Note: The original capabilityDefinition is required to determine which format to append to the worker status.
-func ensureUniformMachineImages(images []apismetal.MachineImage, capabilityDefinitions []gardencorev1beta1.CapabilityDefinition) []apismetal.MachineImage {
-	var uniformMachineImages []apismetal.MachineImage
+func ensureUniformMachineImages(images []metalapi.MachineImage, capabilityDefinitions []gardencorev1beta1.CapabilityDefinition) []metalapi.MachineImage {
+	var uniformMachineImages []metalapi.MachineImage
 
 	if len(capabilityDefinitions) == 0 {
 		// transform images that were added with Capabilities to the legacy format without Capabilities
@@ -104,7 +104,7 @@ func ensureUniformMachineImages(images []apismetal.MachineImage, capabilityDefin
 			if len(img.Capabilities[v1beta1constants.ArchitectureName]) > 0 {
 				architecture = &img.Capabilities[v1beta1constants.ArchitectureName][0]
 			}
-			uniformMachineImages = appendMachineImage(uniformMachineImages, apismetal.MachineImage{
+			uniformMachineImages = appendMachineImage(uniformMachineImages, metalapi.MachineImage{
 				Name:         img.Name,
 				Version:      img.Version,
 				Image:        img.Image,
@@ -122,7 +122,7 @@ func ensureUniformMachineImages(images []apismetal.MachineImage, capabilityDefin
 		} else {
 			// transform image without Capabilities to capability format with defaulted Architecture
 			architecture := ptr.Deref(img.Architecture, v1beta1constants.ArchitectureAMD64)
-			uniformMachineImages = appendMachineImage(uniformMachineImages, apismetal.MachineImage{
+			uniformMachineImages = appendMachineImage(uniformMachineImages, metalapi.MachineImage{
 				Name:         img.Name,
 				Version:      img.Version,
 				Image:        img.Image,
@@ -134,7 +134,7 @@ func ensureUniformMachineImages(images []apismetal.MachineImage, capabilityDefin
 }
 
 // appendMachineImage appends a machine image to the list if it doesn't already exist with the same capabilities or architecture.
-func appendMachineImage(machineImages []apismetal.MachineImage, machineImage apismetal.MachineImage, capabilityDefinitions []gardencorev1beta1.CapabilityDefinition) []apismetal.MachineImage {
+func appendMachineImage(machineImages []metalapi.MachineImage, machineImage metalapi.MachineImage, capabilityDefinitions []gardencorev1beta1.CapabilityDefinition) []metalapi.MachineImage {
 	// support for cloudprofile machine images without capabilities
 	if len(capabilityDefinitions) == 0 {
 		for _, image := range machineImages {
@@ -144,7 +144,7 @@ func appendMachineImage(machineImages []apismetal.MachineImage, machineImage api
 				return machineImages
 			}
 		}
-		return append(machineImages, apismetal.MachineImage{
+		return append(machineImages, metalapi.MachineImage{
 			Name:         machineImage.Name,
 			Version:      machineImage.Version,
 			Image:        machineImage.Image,
@@ -163,7 +163,7 @@ func appendMachineImage(machineImages []apismetal.MachineImage, machineImage api
 	}
 
 	// If the image does not exist, we create a new machine image entry with the capabilities.
-	return append(machineImages, apismetal.MachineImage{
+	return append(machineImages, metalapi.MachineImage{
 		Name:         machineImage.Name,
 		Version:      machineImage.Version,
 		Image:        machineImage.Image,
@@ -171,8 +171,8 @@ func appendMachineImage(machineImages []apismetal.MachineImage, machineImage api
 	})
 }
 
-func (w *workerDelegate) decodeWorkerProviderStatus() (*apismetal.WorkerStatus, error) {
-	workerStatus := &apismetal.WorkerStatus{}
+func (w *workerDelegate) decodeWorkerProviderStatus() (*metalapi.WorkerStatus, error) {
+	workerStatus := &metalapi.WorkerStatus{}
 
 	if w.worker.Status.ProviderStatus == nil {
 		return workerStatus, nil
@@ -185,7 +185,7 @@ func (w *workerDelegate) decodeWorkerProviderStatus() (*apismetal.WorkerStatus, 
 	return workerStatus, nil
 }
 
-func (w *workerDelegate) updateWorkerProviderStatus(ctx context.Context, workerStatus *apismetal.WorkerStatus) error {
+func (w *workerDelegate) updateWorkerProviderStatus(ctx context.Context, workerStatus *metalapi.WorkerStatus) error {
 	status := &apiv1alpha1.WorkerStatus{}
 
 	if err := w.scheme.Convert(workerStatus, status, nil); err != nil {

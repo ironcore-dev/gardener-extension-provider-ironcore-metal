@@ -32,7 +32,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/ptr"
 
-	apismetal "github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/apis/metal"
+	metalapi "github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/apis/metal"
 	"github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/apis/metal/v1alpha1"
 	"github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/metal"
 	"github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/webhook/controlplane"
@@ -77,12 +77,12 @@ var _ = Describe("Ensurer", func() {
 			},
 		)
 
-		controlPlaneConfig = &apismetal.ControlPlaneConfig{
+		controlPlaneConfig = &metalapi.ControlPlaneConfig{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: v1alpha1.SchemeGroupVersion.String(),
 				Kind:       "ControlPlaneConfig",
 			},
-			NodeNamePolicy: apismetal.NodeNamePolicyServerName,
+			NodeNamePolicy: metalapi.NodeNamePolicyServerName,
 		}
 		controlPlaneConfigRaw, _  = json.Marshal(controlPlaneConfig)
 		eContextK8sServerHostName = gcontext.NewInternalGardenContext(

@@ -24,7 +24,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	"github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/admission/mutator"
-	apismetal "github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/apis/metal"
+	metalapi "github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/apis/metal"
 	"github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/apis/metal/install"
 )
 
@@ -106,14 +106,14 @@ var _ = Describe("NamespacedCloudProfile Mutator", func() {
 					MatchFields(IgnoreExtras, Fields{
 						"Name": Equal("gardenlinux"),
 						"Versions": ContainElements(
-							apismetal.MachineImageVersion{Version: "1.0-amd64", Image: "local/image-1.0-amd64", Architecture: ptr.To("amd64")},
-							apismetal.MachineImageVersion{Version: "1.0-arm64", Image: "local/image-1.0-arm64", Architecture: ptr.To("arm64")},
-							apismetal.MachineImageVersion{Version: "1.1", Image: "local/image-1.1-arm64", Architecture: ptr.To("arm64")},
+							metalapi.MachineImageVersion{Version: "1.0-amd64", Image: "local/image-1.0-amd64", Architecture: ptr.To("amd64")},
+							metalapi.MachineImageVersion{Version: "1.0-arm64", Image: "local/image-1.0-arm64", Architecture: ptr.To("arm64")},
+							metalapi.MachineImageVersion{Version: "1.1", Image: "local/image-1.1-arm64", Architecture: ptr.To("arm64")},
 						),
 					}),
 					MatchFields(IgnoreExtras, Fields{
 						"Name":     Equal("ubuntu"),
-						"Versions": ContainElements(apismetal.MachineImageVersion{Version: "2.0", Image: "local/ubuntu-2.0-amd64", Architecture: ptr.To("amd64")})}),
+						"Versions": ContainElements(metalapi.MachineImageVersion{Version: "2.0", Image: "local/ubuntu-2.0-amd64", Architecture: ptr.To("amd64")})}),
 				))
 			})
 		})
@@ -151,13 +151,13 @@ var _ = Describe("NamespacedCloudProfile Mutator", func() {
 				MatchFields(IgnoreExtras, Fields{
 					"Name": Equal("image-1"),
 					"Versions": ContainElements(
-						apismetal.MachineImageVersion{Version: "1.0",
-							CapabilityFlavors: []apismetal.MachineImageFlavor{{
+						metalapi.MachineImageVersion{Version: "1.0",
+							CapabilityFlavors: []metalapi.MachineImageFlavor{{
 								Capabilities: v1beta1.Capabilities{"architecture": []string{"amd64"}},
 								Image:        "local/image:1.0",
 							}}},
-						apismetal.MachineImageVersion{Version: "1.1",
-							CapabilityFlavors: []apismetal.MachineImageFlavor{
+						metalapi.MachineImageVersion{Version: "1.1",
+							CapabilityFlavors: []metalapi.MachineImageFlavor{
 								{
 									Capabilities: v1beta1.Capabilities{"architecture": []string{"amd64"}},
 									Image:        "local/image:1.1-amd",
@@ -173,8 +173,8 @@ var _ = Describe("NamespacedCloudProfile Mutator", func() {
 				MatchFields(IgnoreExtras, Fields{
 					"Name": Equal("image-2"),
 					"Versions": ContainElements(
-						apismetal.MachineImageVersion{Version: "2.0",
-							CapabilityFlavors: []apismetal.MachineImageFlavor{{
+						metalapi.MachineImageVersion{Version: "2.0",
+							CapabilityFlavors: []metalapi.MachineImageFlavor{{
 								Capabilities: v1beta1.Capabilities{"architecture": []string{"amd64"}},
 								Image:        "local/image:2.0",
 							}},
@@ -414,8 +414,8 @@ var _ = Describe("NamespacedCloudProfile Mutator", func() {
 	})
 })
 
-func decodeCloudProfileConfig(decoder runtime.Decoder, config *runtime.RawExtension) (*apismetal.CloudProfileConfig, error) {
-	cloudProfileConfig := &apismetal.CloudProfileConfig{}
+func decodeCloudProfileConfig(decoder runtime.Decoder, config *runtime.RawExtension) (*metalapi.CloudProfileConfig, error) {
+	cloudProfileConfig := &metalapi.CloudProfileConfig{}
 	if err := util.Decode(decoder, config.Raw, cloudProfileConfig); err != nil {
 		return nil, err
 	}

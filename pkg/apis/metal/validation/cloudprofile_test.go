@@ -14,14 +14,14 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/utils/ptr"
 
-	apismetal "github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/apis/metal"
+	metalapi "github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/apis/metal"
 )
 
 var _ = Describe("CloudProfileConfig validation", func() {
 	Describe("Mixed format validation", func() {
 		var (
 			capabilitiesDefinitions []gardencorev1beta1.CapabilityDefinition
-			cloudProfileConfig      *apismetal.CloudProfileConfig
+			cloudProfileConfig      *metalapi.CloudProfileConfig
 			machineImages           []core.MachineImage
 			nilPath                 *field.Path
 		)
@@ -36,15 +36,15 @@ var _ = Describe("CloudProfileConfig validation", func() {
 		})
 
 		It("should allow mixed format with some versions using old format and others using new format", func() {
-			cloudProfileConfig = &apismetal.CloudProfileConfig{
-				MachineImages: []apismetal.MachineImages{
+			cloudProfileConfig = &metalapi.CloudProfileConfig{
+				MachineImages: []metalapi.MachineImages{
 					{
 						Name: "gardenlinux",
-						Versions: []apismetal.MachineImageVersion{
+						Versions: []metalapi.MachineImageVersion{
 							// New format
 							{
 								Version: "1.0.0",
-								CapabilityFlavors: []apismetal.MachineImageFlavor{
+								CapabilityFlavors: []metalapi.MachineImageFlavor{
 									{
 										Image:        "path/to/image-1234",
 										Capabilities: gardencorev1beta1.Capabilities{v1beta1constants.ArchitectureName: []string{v1beta1constants.ArchitectureAMD64}},
@@ -88,16 +88,16 @@ var _ = Describe("CloudProfileConfig validation", func() {
 		})
 
 		It("should reject version with both old and new format simultaneously", func() {
-			cloudProfileConfig = &apismetal.CloudProfileConfig{
-				MachineImages: []apismetal.MachineImages{
+			cloudProfileConfig = &metalapi.CloudProfileConfig{
+				MachineImages: []metalapi.MachineImages{
 					{
 						Name: "gardenlinux",
-						Versions: []apismetal.MachineImageVersion{
+						Versions: []metalapi.MachineImageVersion{
 							{
 								Version:           "1.0.0",
-								Image:             "path/to/image-old",                                          // old format
-								Architecture:      ptr.To(v1beta1constants.ArchitectureAMD64),                   // old format
-								CapabilityFlavors: []apismetal.MachineImageFlavor{{Image: "path/to/image-new"}}, // new format
+								Image:             "path/to/image-old",                                         // old format
+								Architecture:      ptr.To(v1beta1constants.ArchitectureAMD64),                  // old format
+								CapabilityFlavors: []metalapi.MachineImageFlavor{{Image: "path/to/image-new"}}, // new format
 							},
 						},
 					},
@@ -124,11 +124,11 @@ var _ = Describe("CloudProfileConfig validation", func() {
 		})
 
 		It("should allow old format (image with architecture) when CloudProfile uses capabilities", func() {
-			cloudProfileConfig = &apismetal.CloudProfileConfig{
-				MachineImages: []apismetal.MachineImages{
+			cloudProfileConfig = &metalapi.CloudProfileConfig{
+				MachineImages: []metalapi.MachineImages{
 					{
 						Name: "gardenlinux",
-						Versions: []apismetal.MachineImageVersion{
+						Versions: []metalapi.MachineImageVersion{
 							{Version: "1.0.0", Image: "path/to/image-amd64", Architecture: ptr.To(v1beta1constants.ArchitectureAMD64)},
 						},
 					},
@@ -150,11 +150,11 @@ var _ = Describe("CloudProfileConfig validation", func() {
 		})
 
 		It("should report missing architecture mapping when using old format with capabilities", func() {
-			cloudProfileConfig = &apismetal.CloudProfileConfig{
-				MachineImages: []apismetal.MachineImages{
+			cloudProfileConfig = &metalapi.CloudProfileConfig{
+				MachineImages: []metalapi.MachineImages{
 					{
 						Name: "gardenlinux",
-						Versions: []apismetal.MachineImageVersion{
+						Versions: []metalapi.MachineImageVersion{
 							// Only amd64, but spec expects both amd64 and arm64
 							{Version: "1.0.0", Image: "path/to/image-amd64", Architecture: ptr.To(v1beta1constants.ArchitectureAMD64)},
 						},
@@ -188,7 +188,7 @@ var _ = Describe("CloudProfileConfig validation", func() {
 	DescribeTableSubtree("#ValidateCloudProfileConfig", func(isCapabilitiesCloudProfile bool) {
 		var (
 			capabilitiesDefinitions []gardencorev1beta1.CapabilityDefinition
-			cloudProfileConfig      *apismetal.CloudProfileConfig
+			cloudProfileConfig      *metalapi.CloudProfileConfig
 			machineImages           []core.MachineImage
 			nilPath                 *field.Path
 			machineImageName        string
@@ -198,7 +198,7 @@ var _ = Describe("CloudProfileConfig validation", func() {
 		BeforeEach(func() {
 			machineImageName = "gardenlinux"
 			machineImageVersion = "1.2.3"
-			providerImageVersion := apismetal.MachineImageVersion{
+			providerImageVersion := metalapi.MachineImageVersion{
 				Version:      machineImageVersion,
 				Image:        "path/to/image",
 				Architecture: ptr.To(v1beta1constants.ArchitectureAMD64),
@@ -208,17 +208,17 @@ var _ = Describe("CloudProfileConfig validation", func() {
 					Name:   v1beta1constants.ArchitectureName,
 					Values: []string{v1beta1constants.ArchitectureAMD64},
 				}}
-				providerImageVersion = apismetal.MachineImageVersion{
+				providerImageVersion = metalapi.MachineImageVersion{
 					Version:           machineImageVersion,
-					CapabilityFlavors: []apismetal.MachineImageFlavor{{Image: "path/to/image"}},
+					CapabilityFlavors: []metalapi.MachineImageFlavor{{Image: "path/to/image"}},
 				}
 			}
 
-			cloudProfileConfig = &apismetal.CloudProfileConfig{
-				MachineImages: []apismetal.MachineImages{
+			cloudProfileConfig = &metalapi.CloudProfileConfig{
+				MachineImages: []metalapi.MachineImages{
 					{
 						Name:     machineImageName,
-						Versions: []apismetal.MachineImageVersion{providerImageVersion},
+						Versions: []metalapi.MachineImageVersion{providerImageVersion},
 					},
 				},
 			}

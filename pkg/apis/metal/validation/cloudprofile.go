@@ -18,12 +18,12 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/utils/ptr"
 
-	apismetal "github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/apis/metal"
+	metalapi "github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/apis/metal"
 	"github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/apis/metal/helper"
 )
 
 // ValidateCloudProfileConfig validates a CloudProfileConfig object.
-func ValidateCloudProfileConfig(cpConfig *apismetal.CloudProfileConfig, machineImages []core.MachineImage, capabilityDefinitions []gardencorev1beta1.CapabilityDefinition, specPath *field.Path) field.ErrorList {
+func ValidateCloudProfileConfig(cpConfig *metalapi.CloudProfileConfig, machineImages []core.MachineImage, capabilityDefinitions []gardencorev1beta1.CapabilityDefinition, specPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	machineImagesPath := specPath.Child("providerConfig").Child("machineImages")
@@ -36,7 +36,7 @@ func ValidateCloudProfileConfig(cpConfig *apismetal.CloudProfileConfig, machineI
 }
 
 // verify that for each cp image a provider image exists
-func validateProviderImagesMapping(cpConfigImages []apismetal.MachineImages, machineImages []core.MachineImage, capabilityDefinitions []gardencorev1beta1.CapabilityDefinition, fldPath *field.Path) field.ErrorList {
+func validateProviderImagesMapping(cpConfigImages []metalapi.MachineImages, machineImages []core.MachineImage, capabilityDefinitions []gardencorev1beta1.CapabilityDefinition, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 	cpConfigImagesContext := NewProviderImagesContext(cpConfigImages)
 
@@ -79,7 +79,7 @@ func validateProviderImagesMapping(cpConfigImages []apismetal.MachineImages, mac
 // validateImageFlavorMappingMixed validates that each flavor in a version has a corresponding mapping.
 // This function handles both the new format (capabilityFlavors) and old format (image with architecture).
 // For mixed format support, multiple provider version entries may exist for the same version string.
-func validateImageFlavorMappingMixed(version core.MachineImageVersion, providerVersions []apismetal.MachineImageVersion, capabilityDefinitions []gardencorev1beta1.CapabilityDefinition, machineImage core.MachineImage, machineImageVersionPath *field.Path) field.ErrorList {
+func validateImageFlavorMappingMixed(version core.MachineImageVersion, providerVersions []metalapi.MachineImageVersion, capabilityDefinitions []gardencorev1beta1.CapabilityDefinition, machineImage core.MachineImage, machineImageVersionPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	var v1beta1Version gardencorev1beta1.MachineImageVersion
@@ -117,7 +117,7 @@ func validateImageFlavorMappingMixed(version core.MachineImageVersion, providerV
 }
 
 // validateMachineImages validates the machine images section of CloudProfileConfig
-func validateMachineImages(machineImages []apismetal.MachineImages, capabilityDefinitions []gardencorev1beta1.CapabilityDefinition, fldPath *field.Path) field.ErrorList {
+func validateMachineImages(machineImages []metalapi.MachineImages, capabilityDefinitions []gardencorev1beta1.CapabilityDefinition, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	// Ensure at least one machine image is provided
@@ -136,7 +136,7 @@ func validateMachineImages(machineImages []apismetal.MachineImages, capabilityDe
 }
 
 // ValidateProviderMachineImage validates a CloudProfileConfig MachineImages entry.
-func ValidateProviderMachineImage(providerImage apismetal.MachineImages, capabilityDefinitions []gardencorev1beta1.CapabilityDefinition, imagePath *field.Path) field.ErrorList {
+func ValidateProviderMachineImage(providerImage metalapi.MachineImages, capabilityDefinitions []gardencorev1beta1.CapabilityDefinition, imagePath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if len(providerImage.Name) == 0 {
@@ -184,7 +184,7 @@ func ValidateProviderMachineImage(providerImage apismetal.MachineImages, capabil
 }
 
 // validateCapabilityFlavors validates the new format (capabilityFlavors) for a machine image version.
-func validateCapabilityFlavors(providerImage apismetal.MachineImages, version apismetal.MachineImageVersion, capabilityDefinitions []gardencorev1beta1.CapabilityDefinition, jdxPath *field.Path) field.ErrorList {
+func validateCapabilityFlavors(providerImage metalapi.MachineImages, version metalapi.MachineImageVersion, capabilityDefinitions []gardencorev1beta1.CapabilityDefinition, jdxPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	for k, capabilityFlavor := range version.CapabilityFlavors {
@@ -208,7 +208,7 @@ func validateCapabilityFlavors(providerImage apismetal.MachineImages, version ap
 
 // validateLegacyImageWithCapabilities validates old format (image with architecture) when CloudProfile uses capabilities.
 // This allows architecture field since it will be converted to capability flavors.
-func validateLegacyImageWithCapabilities(version apismetal.MachineImageVersion, jdxPath *field.Path) field.ErrorList {
+func validateLegacyImageWithCapabilities(version metalapi.MachineImageVersion, jdxPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 	versionArch := ptr.Deref(version.Architecture, v1beta1constants.ArchitectureAMD64)
 
@@ -221,7 +221,7 @@ func validateLegacyImageWithCapabilities(version apismetal.MachineImageVersion, 
 }
 
 // validateLegacyImage validates old format (image with architecture) when CloudProfile does not use capabilities.
-func validateLegacyImage(providerImage apismetal.MachineImages, version apismetal.MachineImageVersion, jdxPath *field.Path) field.ErrorList {
+func validateLegacyImage(providerImage metalapi.MachineImages, version metalapi.MachineImageVersion, jdxPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 	versionArch := ptr.Deref(version.Architecture, v1beta1constants.ArchitectureAMD64)
 
@@ -242,7 +242,7 @@ func validateLegacyImage(providerImage apismetal.MachineImages, version apismeta
 
 func validateArchitectureMapping(
 	version core.MachineImageVersion,
-	cpConfigImages []apismetal.MachineImages,
+	cpConfigImages []metalapi.MachineImages,
 	machineImage core.MachineImage,
 	machineImageVersionPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
@@ -269,26 +269,26 @@ func validateArchitectureMapping(
 }
 
 // NewProviderImagesContextLegacy creates a new ImagesContext for provider images.
-func NewProviderImagesContextLegacy(providerImages []apismetal.MachineImages) *gutil.ImagesContext[apismetal.MachineImages, apismetal.MachineImageVersion] {
+func NewProviderImagesContextLegacy(providerImages []metalapi.MachineImages) *gutil.ImagesContext[metalapi.MachineImages, metalapi.MachineImageVersion] {
 	return gutil.NewImagesContext(
-		utils.CreateMapFromSlice(providerImages, func(mi apismetal.MachineImages) string { return mi.Name }),
-		func(mi apismetal.MachineImages) map[string]apismetal.MachineImageVersion {
-			return utils.CreateMapFromSlice(mi.Versions, func(v apismetal.MachineImageVersion) string { return providerMachineImageKey(v) })
+		utils.CreateMapFromSlice(providerImages, func(mi metalapi.MachineImages) string { return mi.Name }),
+		func(mi metalapi.MachineImages) map[string]metalapi.MachineImageVersion {
+			return utils.CreateMapFromSlice(mi.Versions, func(v metalapi.MachineImageVersion) string { return providerMachineImageKey(v) })
 		},
 	)
 }
 
 // NewProviderImagesContext creates a new ImagesContext for provider images.
-func NewProviderImagesContext(providerImages []apismetal.MachineImages) *gutil.ImagesContext[apismetal.MachineImages, apismetal.MachineImageVersion] {
+func NewProviderImagesContext(providerImages []metalapi.MachineImages) *gutil.ImagesContext[metalapi.MachineImages, metalapi.MachineImageVersion] {
 	return gutil.NewImagesContext(
-		utils.CreateMapFromSlice(providerImages, func(mi apismetal.MachineImages) string { return mi.Name }),
-		func(mi apismetal.MachineImages) map[string]apismetal.MachineImageVersion {
-			return utils.CreateMapFromSlice(mi.Versions, func(v apismetal.MachineImageVersion) string { return v.Version })
+		utils.CreateMapFromSlice(providerImages, func(mi metalapi.MachineImages) string { return mi.Name }),
+		func(mi metalapi.MachineImages) map[string]metalapi.MachineImageVersion {
+			return utils.CreateMapFromSlice(mi.Versions, func(v metalapi.MachineImageVersion) string { return v.Version })
 		},
 	)
 }
 
-func providerMachineImageKey(v apismetal.MachineImageVersion) string {
+func providerMachineImageKey(v metalapi.MachineImageVersion) string {
 	return VersionArchitectureKey(v.Version, ptr.Deref(v.Architecture, v1beta1constants.ArchitectureAMD64))
 }
 
@@ -299,7 +299,7 @@ func VersionArchitectureKey(version, architecture string) string {
 
 // FindCapabilityFlavorsVersion finds the first provider version that uses the new format (capabilityFlavors).
 // Returns nil if no version uses the new format.
-func FindCapabilityFlavorsVersion(providerVersions []apismetal.MachineImageVersion) *apismetal.MachineImageVersion {
+func FindCapabilityFlavorsVersion(providerVersions []metalapi.MachineImageVersion) *metalapi.MachineImageVersion {
 	for i := range providerVersions {
 		if len(providerVersions[i].CapabilityFlavors) > 0 {
 			return &providerVersions[i]
@@ -309,8 +309,8 @@ func FindCapabilityFlavorsVersion(providerVersions []apismetal.MachineImageVersi
 }
 
 // CollectAvailableArchitectures collects unique architectures from all provider version entries (old format).
-func CollectAvailableArchitectures(providerVersions []apismetal.MachineImageVersion) []string {
-	architecturesMap := utils.CreateMapFromSlice(providerVersions, func(v apismetal.MachineImageVersion) string {
+func CollectAvailableArchitectures(providerVersions []metalapi.MachineImageVersion) []string {
+	architecturesMap := utils.CreateMapFromSlice(providerVersions, func(v metalapi.MachineImageVersion) string {
 		return ptr.Deref(v.Architecture, v1beta1constants.ArchitectureAMD64)
 	})
 	return slices.Collect(maps.Keys(architecturesMap))
@@ -321,7 +321,7 @@ func CollectAvailableArchitectures(providerVersions []apismetal.MachineImageVers
 func ValidateMissingCapabilityFlavors(
 	imageName, versionStr string,
 	defaultedSpecCapabilities []gardencorev1beta1.MachineImageFlavor,
-	providerCapabilityFlavors []apismetal.MachineImageFlavor,
+	providerCapabilityFlavors []metalapi.MachineImageFlavor,
 	capabilityDefinitions []gardencorev1beta1.CapabilityDefinition,
 	path *field.Path,
 	errorMsgSuffix string,
@@ -355,7 +355,7 @@ func ValidateMissingCapabilityFlavors(
 func ValidateExcessCapabilityFlavors(
 	imageName, versionStr string,
 	defaultedSpecCapabilities []gardencorev1beta1.MachineImageFlavor,
-	providerCapabilityFlavors []apismetal.MachineImageFlavor,
+	providerCapabilityFlavors []metalapi.MachineImageFlavor,
 	capabilityDefinitions []gardencorev1beta1.CapabilityDefinition,
 	path *field.Path,
 	errorMsgSuffix string,

@@ -23,7 +23,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	"github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/admission"
-	apismetal "github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/apis/metal"
+	metalapi "github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/apis/metal"
 	"github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/apis/metal/helper"
 	"github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/apis/metal/validation"
 )
@@ -52,7 +52,7 @@ func (p *namespacedCloudProfile) Validate(ctx context.Context, newObj, _ client.
 		return nil
 	}
 
-	cpConfig := &apismetal.CloudProfileConfig{}
+	cpConfig := &metalapi.CloudProfileConfig{}
 	if profile.Spec.ProviderConfig != nil {
 		var err error
 		cpConfig, err = admission.DecodeCloudProfileConfig(p.decoder, profile.Spec.ProviderConfig)
@@ -76,7 +76,7 @@ func (p *namespacedCloudProfile) Validate(ctx context.Context, newObj, _ client.
 }
 
 // validateNamespacedCloudProfileProviderConfig validates the CloudProfileConfig passed with a NamespacedCloudProfile.
-func (p *namespacedCloudProfile) validateNamespacedCloudProfileProviderConfig(providerConfig *apismetal.CloudProfileConfig, profileSpec core.NamespacedCloudProfileSpec, parentSpec gardencorev1beta1.CloudProfileSpec) field.ErrorList {
+func (p *namespacedCloudProfile) validateNamespacedCloudProfileProviderConfig(providerConfig *metalapi.CloudProfileConfig, profileSpec core.NamespacedCloudProfileSpec, parentSpec gardencorev1beta1.CloudProfileSpec) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	allErrs = append(allErrs, p.validateMachineImages(providerConfig, profileSpec.MachineImages, parentSpec)...)
@@ -84,7 +84,7 @@ func (p *namespacedCloudProfile) validateNamespacedCloudProfileProviderConfig(pr
 	return allErrs
 }
 
-func (p *namespacedCloudProfile) validateMachineImages(providerConfig *apismetal.CloudProfileConfig, machineImages []core.MachineImage, parentSpec gardencorev1beta1.CloudProfileSpec) field.ErrorList {
+func (p *namespacedCloudProfile) validateMachineImages(providerConfig *metalapi.CloudProfileConfig, machineImages []core.MachineImage, parentSpec gardencorev1beta1.CloudProfileSpec) field.ErrorList {
 	allErrs := field.ErrorList{}
 	capabilityDefinitions := parentSpec.MachineCapabilities
 
@@ -99,7 +99,7 @@ func (p *namespacedCloudProfile) validateMachineImages(providerConfig *apismetal
 	providerImages := validation.NewProviderImagesContextLegacy(providerConfig.MachineImages)
 
 	// Create a map of provider images grouped by version for mixed format support
-	providerVersionsMap := make(map[string]map[string][]apismetal.MachineImageVersion)
+	providerVersionsMap := make(map[string]map[string][]metalapi.MachineImageVersion)
 	for _, img := range providerConfig.MachineImages {
 		providerVersionsMap[img.Name] = helper.GroupVersionsByVersionString(img.Versions)
 	}
@@ -241,7 +241,7 @@ func convertCoreCapabilitiesToV1beta1(coreCapabilities core.Capabilities) garden
 
 // validateMachineImageCapabilitiesMixed validates machine image capabilities with mixed format support.
 // It handles both old format (image with architecture) and new format (capabilityFlavors).
-func validateMachineImageCapabilitiesMixed(machineImage core.MachineImage, version core.MachineImageVersion, providerVersions []apismetal.MachineImageVersion, capabilityDefinitions []gardencorev1beta1.CapabilityDefinition, path *field.Path) field.ErrorList {
+func validateMachineImageCapabilitiesMixed(machineImage core.MachineImage, version core.MachineImageVersion, providerVersions []metalapi.MachineImageVersion, capabilityDefinitions []gardencorev1beta1.CapabilityDefinition, path *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	var v1betaVersion gardencorev1beta1.MachineImageVersion
