@@ -24,18 +24,20 @@ import (
 )
 
 // NewEnsurer creates cloudprovider ensurer.
-func NewEnsurer(logger logr.Logger, mgr manager.Manager) cloudprovider.Ensurer {
+func NewEnsurer(logger logr.Logger, mgr manager.Manager, metalNamespace string) cloudprovider.Ensurer {
 	return &ensurer{
-		logger:  logger,
-		client:  mgr.GetClient(),
-		decoder: serializer.NewCodecFactory(mgr.GetScheme(), serializer.EnableStrict).UniversalDecoder(),
+		logger:         logger,
+		client:         mgr.GetClient(),
+		decoder:        serializer.NewCodecFactory(mgr.GetScheme(), serializer.EnableStrict).UniversalDecoder(),
+		metalNamespace: metalNamespace,
 	}
 }
 
 type ensurer struct {
-	logger  logr.Logger
-	client  client.Client
-	decoder runtime.Decoder
+	logger         logr.Logger
+	client         client.Client
+	decoder        runtime.Decoder
+	metalNamespace string
 }
 
 // EnsureCloudProviderSecret ensures that cloudprovider secret contains
@@ -70,15 +72,8 @@ func (e *ensurer) ensureWorkloadIdentitySecret(
 	cloudProfileConfig *metalapi.CloudProfileConfig,
 	secret *corev1.Secret,
 ) error {
-	if cluster.Shoot.Spec.Provider.InfrastructureConfig == nil {
-		return fmt.Errorf("shoot has no infrastructureConfig but workload identity mode is active")
-	}
-	infraConfig := &metalapi.InfrastructureConfig{}
-	if _, _, err := e.decoder.Decode(cluster.Shoot.Spec.Provider.InfrastructureConfig.Raw, nil, infraConfig); err != nil {
-		return fmt.Errorf("could not decode shoot infrastructureConfig: %w", err)
-	}
-	if infraConfig.MetalNamespace == nil {
-		return fmt.Errorf("metalNamespace must be set in infrastructureConfig when using workload identity")
+	if e.metalNamespace == "" {
+		return fmt.Errorf("metal namespace is not configured; set --metal-namespace on the extension provider")
 	}
 
 	kubeconfig := &clientcmdv1.Config{
@@ -97,7 +92,7 @@ func (e *ensurer) ensureWorkloadIdentitySecret(
 			Context: clientcmdv1.Context{
 				Cluster:   cluster.Shoot.Spec.Region,
 				AuthInfo:  "workload-identity",
-				Namespace: *infraConfig.MetalNamespace,
+				Namespace: e.metalNamespace,
 			},
 		}},
 	}

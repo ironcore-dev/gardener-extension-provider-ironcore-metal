@@ -37,6 +37,10 @@ disableControllers: []
 disableWebhooks: []
 ignoreResources: false
 
+# metalNamespace is the namespace in the Metal-API cluster used as the kubeconfig context namespace
+# for the WorkloadIdentity auth flow. Required when WorkloadIdentity is enabled.
+metalNamespace: ""
+
 # Overwrite component images if needed e.g. in dev/testing environments
 #imageVectorOverwrite: |
 #  images:

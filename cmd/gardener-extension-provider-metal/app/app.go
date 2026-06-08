@@ -36,6 +36,7 @@ import (
 	infrastructurecontroller "github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/controller/infrastructure"
 	workercontroller "github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/controller/worker"
 	"github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/metal"
+	cloudproviderwebhook "github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/webhook/cloudprovider"
 )
 
 // NewControllerManagerCommand creates a new command for running a metal provider controller.
@@ -97,6 +98,8 @@ func NewControllerManagerCommand(ctx context.Context) *cobra.Command {
 			webhookServerOptions,
 			webhookSwitches,
 		)
+
+		metalNamespace string
 
 		aggOption = controllercmd.NewOptionAggregator(
 			generalOpts,
@@ -194,6 +197,8 @@ func NewControllerManagerCommand(ctx context.Context) *cobra.Command {
 			workercontroller.DefaultAddOptions.GardenCluster = gardenCluster
 			workercontroller.DefaultAddOptions.SelfHostedShootCluster = generalOpts.Completed().SelfHostedShootCluster
 
+			cloudproviderwebhook.DefaultAddOptions.MetalNamespace = metalNamespace
+
 			if _, err = webhookOptions.Completed().AddToManager(ctx, mgr, nil); err != nil {
 				return fmt.Errorf("could not add webhooks to manager: %w", err)
 			}
@@ -225,6 +230,7 @@ func NewControllerManagerCommand(ctx context.Context) *cobra.Command {
 
 	verflag.AddFlags(cmd.Flags())
 	aggOption.AddFlags(cmd.Flags())
+	cmd.Flags().StringVar(&metalNamespace, "metal-namespace", "", "Namespace in the Metal-API cluster used as the kubeconfig context namespace for the WorkloadIdentity auth flow.")
 
 	return cmd
 }

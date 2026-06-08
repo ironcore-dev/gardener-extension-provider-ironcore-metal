@@ -5,7 +5,6 @@ package cloudprovider
 
 import (
 	"context"
-	"encoding/json"
 	"testing"
 
 	extensionscontroller "github.com/gardener/gardener/extensions/pkg/controller"
@@ -22,11 +21,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/clientcmd"
-	"k8s.io/utils/ptr"
 
 	api "github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/apis/metal"
 	"github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/apis/metal/install"
-	apiv1alpha1 "github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/apis/metal/v1alpha1"
 )
 
 const namespace = "test"
@@ -146,7 +143,7 @@ var _ = Describe("Ensurer", func() {
 				},
 			}
 
-			ensurer = NewEnsurer(logger, mgr)
+			ensurer = NewEnsurer(logger, mgr, "")
 		})
 
 		It("should add a kubeconfig to the cloudprovider secret", func() {
@@ -185,7 +182,6 @@ var _ = Describe("Ensurer (workload identity)", func() {
 		wiScheme *runtime.Scheme
 		wiMgr    *mockmanager.MockManager
 		wiC      *mockclient.MockClient
-		ensurer  cloudprovider.Ensurer
 	)
 
 	BeforeEach(func() {
@@ -197,8 +193,6 @@ var _ = Describe("Ensurer (workload identity)", func() {
 		wiMgr = mockmanager.NewMockManager(ctrl)
 		wiMgr.EXPECT().GetClient().Return(wiC)
 		wiMgr.EXPECT().GetScheme().Return(wiScheme)
-
-		ensurer = NewEnsurer(logger, wiMgr)
 	})
 
 	AfterEach(func() {
@@ -219,40 +213,27 @@ var _ = Describe("Ensurer (workload identity)", func() {
 			}
 		}
 
-		makeCluster := func(infraConfig *apiv1alpha1.InfrastructureConfig) gcontext.GardenContext {
-			raw, err := json.Marshal(infraConfig)
-			Expect(err).NotTo(HaveOccurred())
-			return gcontext.NewInternalGardenContext(
-				&extensionscontroller.Cluster{
-					CloudProfile: &gardencorev1beta1.CloudProfile{
-						Spec: gardencorev1beta1.CloudProfileSpec{
-							ProviderConfig: &runtime.RawExtension{
-								Object: testCloudProfileConfig,
-							},
-						},
-					},
-					Shoot: &gardencorev1beta1.Shoot{
-						Spec: gardencorev1beta1.ShootSpec{
-							Region: "foo",
-							Provider: gardencorev1beta1.Provider{
-								InfrastructureConfig: &runtime.RawExtension{Raw: raw},
-							},
+		wiCluster := gcontext.NewInternalGardenContext(
+			&extensionscontroller.Cluster{
+				CloudProfile: &gardencorev1beta1.CloudProfile{
+					Spec: gardencorev1beta1.CloudProfileSpec{
+						ProviderConfig: &runtime.RawExtension{
+							Object: testCloudProfileConfig,
 						},
 					},
 				},
-			)
-		}
+				Shoot: &gardencorev1beta1.Shoot{
+					Spec: gardencorev1beta1.ShootSpec{
+						Region: "foo",
+					},
+				},
+			},
+		)
 
 		It("should write a tokenFile kubeconfig when workload identity is active", func() {
-			infraConfig := &apiv1alpha1.InfrastructureConfig{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: "ironcore-metal.provider.extensions.gardener.cloud/v1alpha1",
-					Kind:       "InfrastructureConfig",
-				},
-				MetalNamespace: ptr.To("my-namespace"),
-			}
+			ensurer := NewEnsurer(logger, wiMgr, "my-namespace")
 			secret := wiSecret()
-			Expect(ensurer.EnsureCloudProviderSecret(ctx, makeCluster(infraConfig), secret, nil)).To(Succeed())
+			Expect(ensurer.EnsureCloudProviderSecret(ctx, wiCluster, secret, nil)).To(Succeed())
 
 			Expect(secret.Data).To(HaveKey("kubeconfig"))
 			config, err := clientcmd.Load(secret.Data["kubeconfig"])
@@ -264,36 +245,10 @@ var _ = Describe("Ensurer (workload identity)", func() {
 			Expect(config.Contexts[config.CurrentContext].Namespace).To(Equal("my-namespace"))
 		})
 
-		It("should fail when metalNamespace is missing from infrastructureConfig", func() {
-			infraConfig := &apiv1alpha1.InfrastructureConfig{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: "ironcore-metal.provider.extensions.gardener.cloud/v1alpha1",
-					Kind:       "InfrastructureConfig",
-				},
-			}
+		It("should fail when --metal-namespace flag is not set", func() {
+			ensurer := NewEnsurer(logger, wiMgr, "")
 			secret := wiSecret()
-			Expect(ensurer.EnsureCloudProviderSecret(ctx, makeCluster(infraConfig), secret, nil)).To(MatchError(ContainSubstring("metalNamespace must be set")))
-		})
-
-		It("should fail when infrastructureConfig is absent", func() {
-			clusterWithoutInfra := gcontext.NewInternalGardenContext(
-				&extensionscontroller.Cluster{
-					CloudProfile: &gardencorev1beta1.CloudProfile{
-						Spec: gardencorev1beta1.CloudProfileSpec{
-							ProviderConfig: &runtime.RawExtension{
-								Object: testCloudProfileConfig,
-							},
-						},
-					},
-					Shoot: &gardencorev1beta1.Shoot{
-						Spec: gardencorev1beta1.ShootSpec{
-							Region: "foo",
-						},
-					},
-				},
-			)
-			secret := wiSecret()
-			Expect(ensurer.EnsureCloudProviderSecret(ctx, clusterWithoutInfra, secret, nil)).To(MatchError(ContainSubstring("no infrastructureConfig")))
+			Expect(ensurer.EnsureCloudProviderSecret(ctx, wiCluster, secret, nil)).To(MatchError(ContainSubstring("metal namespace is not configured")))
 		})
 	})
 })

@@ -654,7 +654,6 @@ func Convert_metal_IgnitionConfig_To_v1alpha1_IgnitionConfig(in *metal.IgnitionC
 
 func autoConvert_v1alpha1_InfrastructureConfig_To_metal_InfrastructureConfig(in *InfrastructureConfig, out *metal.InfrastructureConfig, s conversion.Scope) error {
 	out.Networks = *(*[]metal.Networks)(unsafe.Pointer(&in.Networks))
-	out.MetalNamespace = (*string)(unsafe.Pointer(in.MetalNamespace))
 	return nil
 }
 
@@ -665,7 +664,6 @@ func Convert_v1alpha1_InfrastructureConfig_To_metal_InfrastructureConfig(in *Inf
 
 func autoConvert_metal_InfrastructureConfig_To_v1alpha1_InfrastructureConfig(in *metal.InfrastructureConfig, out *InfrastructureConfig, s conversion.Scope) error {
 	out.Networks = *(*[]Networks)(unsafe.Pointer(&in.Networks))
-	out.MetalNamespace = (*string)(unsafe.Pointer(in.MetalNamespace))
 	return nil
 }
 

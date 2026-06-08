@@ -64,6 +64,7 @@ spec:
         - --metrics-bind-address=:{{ tpl .Values.metricsPort . }}
         - --health-bind-address=:{{ tpl .Values.healthPort . }}
         - --gardener-version={{ .Values.gardener.version }}
+        - --metal-namespace={{ .Values.metalNamespace }}
         {{- if .Values.gardener.selfHostedShootCluster }}
         - --self-hosted-shoot-cluster={{ .Values.gardener.selfHostedShootCluster }}
         {{- end }}
