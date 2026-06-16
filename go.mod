@@ -1,6 +1,8 @@
 module github.com/ironcore-dev/gardener-extension-provider-ironcore-metal
 
-go 1.26.2
+go 1.26.0
+
+toolchain go1.26.2
 
 require (
 	github.com/Masterminds/semver/v3 v3.5.0
