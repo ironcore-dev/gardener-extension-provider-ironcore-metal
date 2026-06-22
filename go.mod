@@ -1,6 +1,6 @@
 module github.com/ironcore-dev/gardener-extension-provider-ironcore-metal
 
-go 1.26.2
+go 1.26.0
 
 require (
 	github.com/Masterminds/semver/v3 v3.5.0
@@ -226,7 +226,3 @@ require (
 	sigs.k8s.io/randfill v1.0.0 // indirect
 	sigs.k8s.io/structured-merge-diff/v6 v6.3.2 // indirect
 )
-
-// Pin cloud.google.com/go to resolve ambiguous import issue
-// ref: https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/40319
-replace cloud.google.com/go => cloud.google.com/go v0.110.10

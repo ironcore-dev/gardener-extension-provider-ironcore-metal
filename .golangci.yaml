@@ -5,7 +5,11 @@ linters:
     - importas
     - misspell
     - revive
+    - gomoddirectives
   settings:
+    gomoddirectives:
+      toolchain-forbidden: true
+      go-version-pattern: 1\.\d+(\.0)?$ # Unpatched
     revive:
       severity: error
       rules:
