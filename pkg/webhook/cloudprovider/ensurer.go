@@ -84,7 +84,7 @@ func (e *ensurer) ensureWorkloadIdentitySecret(
 		AuthInfos: []clientcmdv1.NamedAuthInfo{{
 			Name: "workload-identity",
 			AuthInfo: clientcmdv1.AuthInfo{
-				TokenFile: "/var/run/secrets/gardener.cloud/workload-identity/token",
+				TokenFile: "/etc/metal/token",
 			},
 		}},
 		Contexts: []clientcmdv1.NamedContext{{

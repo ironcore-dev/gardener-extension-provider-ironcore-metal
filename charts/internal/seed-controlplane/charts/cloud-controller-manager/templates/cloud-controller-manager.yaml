@@ -91,11 +91,6 @@ spec:
               mountPath: /etc/kubernetes/cloudprovider
             - name: cloudprovider
               mountPath: /etc/metal
-{{- if .Values.workloadIdentity.enabled }}
-            - mountPath: /var/run/secrets/gardener.cloud/workload-identity
-              name: workload-identity
-              readOnly: true
-{{- end }}
       dnsPolicy: ClusterFirst
       restartPolicy: Always
       schedulerName: default-scheduler
@@ -124,15 +119,15 @@ spec:
           configMap:
             name: cloud-provider-config
         - name: cloudprovider
-          secret:
-            secretName: cloudprovider
-{{- if .Values.workloadIdentity.enabled }}
-        - name: workload-identity
           projected:
             defaultMode: 420
             sources:
-            - serviceAccountToken:
-                path: token
-                expirationSeconds: 3600
-                audience: metal-api
-{{- end }}
+            - secret:
+                name: cloudprovider
+                items:
+                - key: kubeconfig
+                  path: kubeconfig
+                {{- if .Values.workloadIdentity.enabled }}
+                - key: token
+                  path: token
+                {{- end }}

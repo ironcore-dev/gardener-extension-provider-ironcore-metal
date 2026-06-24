@@ -76,11 +76,6 @@ spec:
         - mountPath: /etc/metal
           name: cloudprovider
           readOnly: true
-{{- if .Values.workloadIdentity.enabled }}
-        - mountPath: /var/run/secrets/gardener.cloud/workload-identity
-          name: workload-identity
-          readOnly: true
-{{- end }}
       - name: metal-machine-controller-manager
         image: {{ index .Values.images "machine-controller-manager" }}
         imagePullPolicy: IfNotPresent
@@ -116,18 +111,18 @@ spec:
           readOnly: true
       volumes:
       - name: cloudprovider
-        secret:
-          secretName: cloudprovider
-{{- if .Values.workloadIdentity.enabled }}
-      - name: workload-identity
         projected:
           defaultMode: 420
           sources:
-          - serviceAccountToken:
-              path: token
-              expirationSeconds: 3600
-              audience: metal-api
-{{- end }}
+          - secret:
+              name: cloudprovider
+              items:
+              - key: kubeconfig
+                path: kubeconfig
+              {{- if .Values.workloadIdentity.enabled }}
+              - key: token
+                path: token
+              {{- end }}
       - name: kubeconfig
         projected:
           defaultMode: 420

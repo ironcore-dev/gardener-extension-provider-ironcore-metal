@@ -241,7 +241,7 @@ var _ = Describe("Ensurer (workload identity)", func() {
 			Expect(config.Clusters[config.CurrentContext].Server).To(Equal("https://localhost"))
 			Expect(config.Clusters[config.CurrentContext].CertificateAuthorityData).To(Equal([]byte("abcd1234")))
 			Expect(config.AuthInfos["workload-identity"].Token).To(BeEmpty())
-			Expect(config.AuthInfos["workload-identity"].TokenFile).To(Equal("/var/run/secrets/gardener.cloud/workload-identity/token"))
+			Expect(config.AuthInfos["workload-identity"].TokenFile).To(Equal("/etc/metal/token"))
 			Expect(config.Contexts[config.CurrentContext].Namespace).To(Equal("my-namespace"))
 		})
 
