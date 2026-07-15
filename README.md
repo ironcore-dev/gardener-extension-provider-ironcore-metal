@@ -1,7 +1,6 @@
 # [Gardener Extension for IronCore Metal API provider](https://gardener.cloud)
 
 [![REUSE status](https://api.reuse.software/badge/github.com/ironcore-dev/gardener-extension-provider-ironcore-metal)](https://api.reuse.software/info/github.com/ironcore-dev/gardener-extension-provider-ironcore-metal)
-[![Go Report Card](https://goreportcard.com/badge/github.com/ironcore-dev/gardener-extension-provider-ironcore-metal)](https://goreportcard.com/report/github.com/ironcore-dev/gardener-extension-provider-ironcore-metal)
 [![GitHub License](https://img.shields.io/static/v1?label=License&message=Apache-2.0&color=blue)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://makeapullrequest.com)
 
