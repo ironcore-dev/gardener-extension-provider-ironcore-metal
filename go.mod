@@ -15,7 +15,7 @@ require (
 	github.com/ironcore-dev/controller-utils v0.9.9
 	github.com/ironcore-dev/vgopath v0.1.11
 	github.com/onsi/ginkgo/v2 v2.32.1
-	github.com/onsi/gomega v1.42.1
+	github.com/onsi/gomega v1.43.0
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/pflag v1.0.10
 	go.uber.org/mock v0.6.0
