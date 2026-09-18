@@ -54,4 +54,100 @@ var _ = Describe("ShootConfig validation", func() {
 
 	})
 
+	Describe("#ValidateWorkersUpdate", func() {
+		var (
+			workers    []core.Worker
+			newWorkers []core.Worker
+			fldPath    *field.Path
+		)
+
+		BeforeEach(func() {
+			fldPath = field.NewPath("spec", "provider", "workers")
+			workers = []core.Worker{
+				{
+					Name:  "worker1",
+					Zones: []string{"zone1"},
+				},
+			}
+			newWorkers = []core.Worker{
+				{
+					Name:  "worker1",
+					Zones: []string{"zone1"},
+				},
+			}
+		})
+
+		It("should return no errors when nothing changes", func() {
+			Expect(ValidateWorkersUpdate(workers, newWorkers, fldPath)).To(BeEmpty())
+		})
+
+		It("should forbid changing the providerConfig if the update strategy is in-place", func() {
+			workers[0].UpdateStrategy = ptr.To(core.AutoInPlaceUpdate)
+			workers[0].ProviderConfig = &runtime.RawExtension{
+				Raw: []byte(`{"foo":"bar"}`),
+			}
+
+			newWorkers[0].UpdateStrategy = ptr.To(core.AutoInPlaceUpdate)
+			newWorkers[0].ProviderConfig = &runtime.RawExtension{
+				Raw: []byte(`{"foo":"baz"}`),
+			}
+
+			Expect(ValidateWorkersUpdate(workers, newWorkers, fldPath)).To(ConsistOf(
+				PointTo(MatchFields(IgnoreExtras, Fields{
+					"Type":   Equal(field.ErrorTypeInvalid),
+					"Field":  Equal("spec.provider.workers[0].providerConfig"),
+					"Detail": Equal("providerConfig is immutable when update strategy is in-place"),
+				})),
+			))
+		})
+
+		It("should forbid changing the providerConfig if the update strategy is manual in-place", func() {
+			workers[0].UpdateStrategy = ptr.To(core.ManualInPlaceUpdate)
+			workers[0].ProviderConfig = &runtime.RawExtension{
+				Raw: []byte(`{"foo":"bar"}`),
+			}
+
+			newWorkers[0].UpdateStrategy = ptr.To(core.ManualInPlaceUpdate)
+			newWorkers[0].ProviderConfig = &runtime.RawExtension{
+				Raw: []byte(`{"foo":"baz"}`),
+			}
+
+			Expect(ValidateWorkersUpdate(workers, newWorkers, fldPath)).To(ConsistOf(
+				PointTo(MatchFields(IgnoreExtras, Fields{
+					"Type":   Equal(field.ErrorTypeInvalid),
+					"Field":  Equal("spec.provider.workers[0].providerConfig"),
+					"Detail": Equal("providerConfig is immutable when update strategy is in-place"),
+				})),
+			))
+		})
+
+		It("should allow changing providerConfig if the update strategy is rolling", func() {
+			workers[0].UpdateStrategy = ptr.To(core.AutoRollingUpdate)
+			workers[0].ProviderConfig = &runtime.RawExtension{
+				Raw: []byte(`{"foo":"bar"}`),
+			}
+
+			newWorkers[0].UpdateStrategy = ptr.To(core.AutoRollingUpdate)
+			newWorkers[0].ProviderConfig = &runtime.RawExtension{
+				Raw: []byte(`{"foo":"baz"}`),
+			}
+
+			Expect(ValidateWorkersUpdate(workers, newWorkers, fldPath)).To(BeEmpty())
+		})
+
+		It("should allow no change to providerConfig with in-place strategy", func() {
+			workers[0].UpdateStrategy = ptr.To(core.AutoInPlaceUpdate)
+			workers[0].ProviderConfig = &runtime.RawExtension{
+				Raw: []byte(`{"foo":"bar"}`),
+			}
+
+			newWorkers[0].UpdateStrategy = ptr.To(core.AutoInPlaceUpdate)
+			newWorkers[0].ProviderConfig = &runtime.RawExtension{
+				Raw: []byte(`{"foo":"bar"}`),
+			}
+
+			Expect(ValidateWorkersUpdate(workers, newWorkers, fldPath)).To(BeEmpty())
+		})
+	})
+
 })

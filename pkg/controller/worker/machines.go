@@ -81,6 +81,20 @@ func (w *workerDelegate) GenerateMachineDeployments(ctx context.Context) (worker
 				},
 			}
 
+			if gardencorev1beta1helper.IsUpdateStrategyInPlace(pool.UpdateStrategy) {
+				machineDeploymentStrategy = machinecontrollerv1alpha1.MachineDeploymentStrategy{
+					Type: machinecontrollerv1alpha1.InPlaceUpdateMachineDeploymentStrategyType,
+					InPlaceUpdate: &machinecontrollerv1alpha1.InPlaceUpdateMachineDeployment{
+						UpdateConfiguration: updateConfiguration,
+						OrchestrationType:   machinecontrollerv1alpha1.OrchestrationTypeAuto,
+					},
+				}
+
+				if gardencorev1beta1helper.IsUpdateStrategyManualInPlace(pool.UpdateStrategy) {
+					machineDeploymentStrategy.InPlaceUpdate.OrchestrationType = machinecontrollerv1alpha1.OrchestrationTypeManual
+				}
+			}
+
 			machineDeployments = append(machineDeployments, worker.MachineDeployment{
 				Name:                 deploymentName,
 				PoolName:             pool.Name,
@@ -101,6 +115,7 @@ func (w *workerDelegate) GenerateMachineDeployments(ctx context.Context) (worker
 	return machineDeployments, nil
 }
 
+// generateMachineClassAndSecrets creates the machine class and secret objects for each worker pool and zone.
 func (w *workerDelegate) generateMachineClassAndSecrets(ctx context.Context) ([]*machinecontrollerv1alpha1.MachineClass, []*corev1.Secret, error) {
 	var (
 		machineClasses      []*machinecontrollerv1alpha1.MachineClass
@@ -246,7 +261,14 @@ func (w *workerDelegate) generateMachineClassAndSecrets(ctx context.Context) ([]
 	return machineClasses, machineClassSecrets, nil
 }
 
+// generateHashForWorkerPool computes a hash for the worker pool configuration.
+// For in-place update pools, providerConfig is excluded because MCM cannot apply provider config changes in-place.
 func (w *workerDelegate) generateHashForWorkerPool(pool v1alpha1.WorkerPool) (string, error) {
+	// Do not include providerConfig in hash if the update strategy is InPlace.
+	if gardencorev1beta1helper.IsUpdateStrategyInPlace(pool.UpdateStrategy) {
+		return worker.WorkerPoolHash(pool, w.cluster, nil, nil)
+	}
+
 	providerConfig := ""
 	if pool.ProviderConfig != nil {
 		providerConfig = string(pool.ProviderConfig.Raw)
