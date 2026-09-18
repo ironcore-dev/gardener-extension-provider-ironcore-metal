@@ -9,8 +9,9 @@ import (
 
 	"github.com/gardener/gardener/extensions/pkg/controller/worker"
 	genericworkeractuator "github.com/gardener/gardener/extensions/pkg/controller/worker/genericactuator"
-	"github.com/gardener/gardener/pkg/apis/core/v1beta1"
+	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
+	gardenerextensionv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
 	machinecontrollerv1alpha1 "github.com/gardener/machine-controller-manager/pkg/apis/machine/v1alpha1"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -18,6 +19,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/ptr"
 	. "sigs.k8s.io/controller-runtime/pkg/envtest/komega"
 
@@ -47,13 +49,13 @@ var _ = Describe("Machines", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		BeforeEach(func(ctx SpecContext) {
-			testCluster.CloudProfile.Spec.MachineCapabilities = []v1beta1.CapabilityDefinition{
+			testCluster.CloudProfile.Spec.MachineCapabilities = []gardencorev1beta1.CapabilityDefinition{
 				{Name: "architecture", Values: []string{"amd64", "arm64"}},
 			}
-			testCluster.CloudProfile.Spec.MachineTypes = []v1beta1.MachineType{
+			testCluster.CloudProfile.Spec.MachineTypes = []gardencorev1beta1.MachineType{
 				{
 					Name: pool.MachineType,
-					Capabilities: v1beta1.Capabilities{
+					Capabilities: gardencorev1beta1.Capabilities{
 						"architecture": []string{"amd64"},
 					},
 				},
@@ -219,6 +221,215 @@ var _ = Describe("Machines", func() {
 			Expect(md.PoolName).ToNot(BeEmpty(), "PoolName must not be empty for deployment %s", md.Name)
 			Expect(md.PoolName).To(Equal(pool.Name), "PoolName must match the worker pool name for deployment %s", md.Name)
 		}
+	})
+
+	Context("in-place update strategy", func() {
+		var (
+			inPlacePoolName       = "pool-inplace"
+			manualInPlacePoolName = "pool-manual-inplace"
+		)
+
+		newInPlacePool := func(name string, strategy gardencorev1beta1.MachineUpdateStrategy) gardenerextensionv1alpha1.WorkerPool {
+			return gardenerextensionv1alpha1.WorkerPool{
+				Name:                name,
+				MachineType:         pool.MachineType,
+				Minimum:             pool.Minimum,
+				Maximum:             pool.Maximum,
+				MaxSurge:            intstr.FromInt32(3),
+				MaxUnavailable:      intstr.FromInt32(1),
+				Architecture:        pool.Architecture,
+				MachineImage:        pool.MachineImage,
+				Volume:              pool.Volume,
+				Zones:               pool.Zones,
+				Labels:              pool.Labels,
+				Annotations:         pool.Annotations,
+				Taints:              pool.Taints,
+				NodeTemplate:        pool.NodeTemplate,
+				ProviderConfig:      pool.ProviderConfig,
+				UpdateStrategy:      ptr.To(strategy),
+				KubernetesVersion:   ptr.To(shootVersion),
+				NodeAgentSecretName: pool.NodeAgentSecretName,
+				UserDataSecretRef:   pool.UserDataSecretRef,
+			}
+		}
+
+		It("should generate in-place machine deployments with AutoInPlaceUpdate strategy", func(ctx SpecContext) {
+			autoPool := newInPlacePool(inPlacePoolName, gardencorev1beta1.AutoInPlaceUpdate)
+			w.Spec.Pools = []gardenerextensionv1alpha1.WorkerPool{autoPool}
+
+			workerPoolHash, err := worker.WorkerPoolHash(autoPool, testCluster, nil, nil)
+			Expect(err).NotTo(HaveOccurred())
+
+			deploymentName1 := fmt.Sprintf("%s-%s-z1", technicalID, inPlacePoolName)
+			deploymentName2 := fmt.Sprintf("%s-%s-z2", technicalID, inPlacePoolName)
+			className1 := fmt.Sprintf("%s-%s", deploymentName1, workerPoolHash)
+			className2 := fmt.Sprintf("%s-%s", deploymentName2, workerPoolHash)
+
+			decoder := serializer.NewCodecFactory(k8sClient.Scheme(), serializer.EnableStrict).UniversalDecoder()
+			workerDelegate, err := NewWorkerDelegate(k8sClient, decoder, k8sClient.Scheme(), "", w, testCluster)
+			Expect(err).NotTo(HaveOccurred())
+
+			machineDeployments, err := workerDelegate.GenerateMachineDeployments(ctx)
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(machineDeployments).To(Equal(worker.MachineDeployments{
+				worker.MachineDeployment{
+					Name:       deploymentName1,
+					PoolName:   inPlacePoolName,
+					ClassName:  className1,
+					SecretName: className1,
+					Minimum:    worker.DistributeOverZones(0, autoPool.Minimum, 2),
+					Maximum:    worker.DistributeOverZones(0, autoPool.Maximum, 2),
+					Strategy: machinecontrollerv1alpha1.MachineDeploymentStrategy{
+						Type: machinecontrollerv1alpha1.InPlaceUpdateMachineDeploymentStrategyType,
+						InPlaceUpdate: &machinecontrollerv1alpha1.InPlaceUpdateMachineDeployment{
+							OrchestrationType: machinecontrollerv1alpha1.OrchestrationTypeAuto,
+							UpdateConfiguration: machinecontrollerv1alpha1.UpdateConfiguration{
+								MaxSurge:       ptr.To(worker.DistributePositiveIntOrPercent(0, autoPool.MaxSurge, 2, autoPool.Maximum)),
+								MaxUnavailable: ptr.To(worker.DistributePositiveIntOrPercent(0, autoPool.MaxUnavailable, 2, autoPool.Minimum)),
+							},
+						},
+					},
+					Labels:               autoPool.Labels,
+					Annotations:          autoPool.Annotations,
+					Taints:               autoPool.Taints,
+					MachineConfiguration: genericworkeractuator.ReadMachineConfiguration(autoPool),
+					Priority:             ptr.To(int32(1)),
+				},
+				worker.MachineDeployment{
+					Name:       deploymentName2,
+					PoolName:   inPlacePoolName,
+					ClassName:  className2,
+					SecretName: className2,
+					Minimum:    worker.DistributeOverZones(1, autoPool.Minimum, 2),
+					Maximum:    worker.DistributeOverZones(1, autoPool.Maximum, 2),
+					Strategy: machinecontrollerv1alpha1.MachineDeploymentStrategy{
+						Type: machinecontrollerv1alpha1.InPlaceUpdateMachineDeploymentStrategyType,
+						InPlaceUpdate: &machinecontrollerv1alpha1.InPlaceUpdateMachineDeployment{
+							OrchestrationType: machinecontrollerv1alpha1.OrchestrationTypeAuto,
+							UpdateConfiguration: machinecontrollerv1alpha1.UpdateConfiguration{
+								MaxSurge:       ptr.To(worker.DistributePositiveIntOrPercent(1, autoPool.MaxSurge, 2, autoPool.Maximum)),
+								MaxUnavailable: ptr.To(worker.DistributePositiveIntOrPercent(1, autoPool.MaxUnavailable, 2, autoPool.Minimum)),
+							},
+						},
+					},
+					Labels:               autoPool.Labels,
+					Annotations:          autoPool.Annotations,
+					Taints:               autoPool.Taints,
+					MachineConfiguration: genericworkeractuator.ReadMachineConfiguration(autoPool),
+					Priority:             ptr.To(int32(1)),
+				},
+			}))
+		})
+
+		It("should generate in-place machine deployments with ManualInPlaceUpdate strategy", func(ctx SpecContext) {
+			manualPool := newInPlacePool(manualInPlacePoolName, gardencorev1beta1.ManualInPlaceUpdate)
+			w.Spec.Pools = []gardenerextensionv1alpha1.WorkerPool{manualPool}
+
+			workerPoolHash, err := worker.WorkerPoolHash(manualPool, testCluster, nil, nil)
+			Expect(err).NotTo(HaveOccurred())
+
+			deploymentName1 := fmt.Sprintf("%s-%s-z1", technicalID, manualInPlacePoolName)
+			deploymentName2 := fmt.Sprintf("%s-%s-z2", technicalID, manualInPlacePoolName)
+			className1 := fmt.Sprintf("%s-%s", deploymentName1, workerPoolHash)
+			className2 := fmt.Sprintf("%s-%s", deploymentName2, workerPoolHash)
+
+			decoder := serializer.NewCodecFactory(k8sClient.Scheme(), serializer.EnableStrict).UniversalDecoder()
+			workerDelegate, err := NewWorkerDelegate(k8sClient, decoder, k8sClient.Scheme(), "", w, testCluster)
+			Expect(err).NotTo(HaveOccurred())
+
+			machineDeployments, err := workerDelegate.GenerateMachineDeployments(ctx)
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(machineDeployments).To(Equal(worker.MachineDeployments{
+				worker.MachineDeployment{
+					Name:       deploymentName1,
+					PoolName:   manualInPlacePoolName,
+					ClassName:  className1,
+					SecretName: className1,
+					Minimum:    worker.DistributeOverZones(0, manualPool.Minimum, 2),
+					Maximum:    worker.DistributeOverZones(0, manualPool.Maximum, 2),
+					Strategy: machinecontrollerv1alpha1.MachineDeploymentStrategy{
+						Type: machinecontrollerv1alpha1.InPlaceUpdateMachineDeploymentStrategyType,
+						InPlaceUpdate: &machinecontrollerv1alpha1.InPlaceUpdateMachineDeployment{
+							OrchestrationType: machinecontrollerv1alpha1.OrchestrationTypeManual,
+							UpdateConfiguration: machinecontrollerv1alpha1.UpdateConfiguration{
+								MaxSurge:       ptr.To(worker.DistributePositiveIntOrPercent(0, manualPool.MaxSurge, 2, manualPool.Maximum)),
+								MaxUnavailable: ptr.To(worker.DistributePositiveIntOrPercent(0, manualPool.MaxUnavailable, 2, manualPool.Minimum)),
+							},
+						},
+					},
+					Labels:               manualPool.Labels,
+					Annotations:          manualPool.Annotations,
+					Taints:               manualPool.Taints,
+					MachineConfiguration: genericworkeractuator.ReadMachineConfiguration(manualPool),
+					Priority:             ptr.To(int32(1)),
+				},
+				worker.MachineDeployment{
+					Name:       deploymentName2,
+					PoolName:   manualInPlacePoolName,
+					ClassName:  className2,
+					SecretName: className2,
+					Minimum:    worker.DistributeOverZones(1, manualPool.Minimum, 2),
+					Maximum:    worker.DistributeOverZones(1, manualPool.Maximum, 2),
+					Strategy: machinecontrollerv1alpha1.MachineDeploymentStrategy{
+						Type: machinecontrollerv1alpha1.InPlaceUpdateMachineDeploymentStrategyType,
+						InPlaceUpdate: &machinecontrollerv1alpha1.InPlaceUpdateMachineDeployment{
+							OrchestrationType: machinecontrollerv1alpha1.OrchestrationTypeManual,
+							UpdateConfiguration: machinecontrollerv1alpha1.UpdateConfiguration{
+								MaxSurge:       ptr.To(worker.DistributePositiveIntOrPercent(1, manualPool.MaxSurge, 2, manualPool.Maximum)),
+								MaxUnavailable: ptr.To(worker.DistributePositiveIntOrPercent(1, manualPool.MaxUnavailable, 2, manualPool.Minimum)),
+							},
+						},
+					},
+					Labels:               manualPool.Labels,
+					Annotations:          manualPool.Annotations,
+					Taints:               manualPool.Taints,
+					MachineConfiguration: genericworkeractuator.ReadMachineConfiguration(manualPool),
+					Priority:             ptr.To(int32(1)),
+				},
+			}))
+		})
+
+		It("should generate mixed rolling and in-place deployments when pools have different strategies", func(ctx SpecContext) {
+			autoPool := newInPlacePool(inPlacePoolName, gardencorev1beta1.AutoInPlaceUpdate)
+			autoPool.Zones = []string{"zone1"}
+			rollingPool := pool
+			rollingPool.Zones = []string{"zone1"}
+
+			w.Spec.Pools = []gardenerextensionv1alpha1.WorkerPool{rollingPool, autoPool}
+
+			decoder := serializer.NewCodecFactory(k8sClient.Scheme(), serializer.EnableStrict).UniversalDecoder()
+			workerDelegate, err := NewWorkerDelegate(k8sClient, decoder, k8sClient.Scheme(), "", w, testCluster)
+			Expect(err).NotTo(HaveOccurred())
+
+			machineDeployments, err := workerDelegate.GenerateMachineDeployments(ctx)
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(machineDeployments).To(HaveLen(2))
+			Expect(machineDeployments[0].Strategy.Type).To(Equal(machinecontrollerv1alpha1.RollingUpdateMachineDeploymentStrategyType))
+			Expect(machineDeployments[0].Strategy.RollingUpdate).NotTo(BeNil())
+			Expect(machineDeployments[0].Strategy.InPlaceUpdate).To(BeNil())
+			Expect(machineDeployments[1].Strategy.Type).To(Equal(machinecontrollerv1alpha1.InPlaceUpdateMachineDeploymentStrategyType))
+			Expect(machineDeployments[1].Strategy.InPlaceUpdate).NotTo(BeNil())
+			Expect(machineDeployments[1].Strategy.InPlaceUpdate.OrchestrationType).To(Equal(machinecontrollerv1alpha1.OrchestrationTypeAuto))
+			Expect(machineDeployments[1].Strategy.RollingUpdate).To(BeNil())
+		})
+
+		It("should produce the same worker pool hash regardless of providerConfig for in-place pools", func(ctx SpecContext) {
+			pool1 := newInPlacePool(inPlacePoolName, gardencorev1beta1.AutoInPlaceUpdate)
+			pool1.ProviderConfig = &runtime.RawExtension{Raw: []byte(`{"config":"value-a"}`)}
+
+			pool2 := newInPlacePool(inPlacePoolName, gardencorev1beta1.AutoInPlaceUpdate)
+			pool2.ProviderConfig = &runtime.RawExtension{Raw: []byte(`{"config":"value-b"}`)}
+
+			hash1, err := worker.WorkerPoolHash(pool1, testCluster, nil, nil)
+			Expect(err).NotTo(HaveOccurred())
+			hash2, err := worker.WorkerPoolHash(pool2, testCluster, nil, nil)
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(hash1).To(Equal(hash2))
+		})
 	})
 })
 

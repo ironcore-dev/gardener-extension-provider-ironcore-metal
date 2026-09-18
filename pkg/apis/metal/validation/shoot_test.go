@@ -148,6 +148,16 @@ var _ = Describe("ShootConfig validation", func() {
 
 			Expect(ValidateWorkersUpdate(workers, newWorkers, fldPath)).To(BeEmpty())
 		})
+
+		It("should allow adding in-place workers", func() {
+			newWorkers = append(newWorkers, core.Worker{
+				Name:           "worker2",
+				UpdateStrategy: ptr.To(core.AutoInPlaceUpdate),
+				Zones:          []string{"zone1"},
+			})
+
+			Expect(ValidateWorkersUpdate(workers, newWorkers, fldPath)).To(BeEmpty())
+		})
 	})
 
 })
