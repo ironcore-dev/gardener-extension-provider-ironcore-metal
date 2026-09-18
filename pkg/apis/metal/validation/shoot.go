@@ -78,7 +78,8 @@ func validateVolume(vol *core.Volume, fldPath *field.Path) field.ErrorList {
 	return allErrs
 }
 
-// ValidateWorkersUpdate validates updates on Workers.
+// ValidateWorkersUpdate validates worker pool updates. It reports immutable zone changes and
+// rejects provider configuration changes for existing workers that use an in-place update strategy.
 func ValidateWorkersUpdate(oldWorkers, newWorkers []core.Worker, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 	for i, newWorker := range newWorkers {

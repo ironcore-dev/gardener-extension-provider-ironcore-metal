@@ -50,7 +50,8 @@ func (w *workerDelegate) DeployMachineClasses(ctx context.Context) error {
 	return nil
 }
 
-// GenerateMachineDeployments generates the configuration for the desired machine deployments.
+// GenerateMachineDeployments generates a desired machine deployment for each worker pool zone.
+// Each deployment uses rolling updates or the pool's automatic or manual in-place update strategy.
 func (w *workerDelegate) GenerateMachineDeployments(ctx context.Context) (worker.MachineDeployments, error) {
 	var (
 		machineDeployments = worker.MachineDeployments{}
