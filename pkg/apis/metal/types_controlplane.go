@@ -153,7 +153,7 @@ const (
 // CalicoBgpConfig contains BGP configuration settings for calico.
 type CalicoBgpConfig struct {
 	// ASNumber is the default AS number used by a node.
-	ASNumber int
+	ASNumber ASNumber
 
 	// nodeToNodeMeshEnabled enables the node-to-node mesh.
 	NodeToNodeMeshEnabled bool
@@ -180,7 +180,7 @@ type BgpPeer struct {
 	PeerIP string
 
 	// ASNumber contains the AS number of the BGP peer.
-	ASNumber int
+	ASNumber ASNumber
 
 	// NodeSelector is a key-value pair to select nodes that should have this peering.
 	NodeSelector string

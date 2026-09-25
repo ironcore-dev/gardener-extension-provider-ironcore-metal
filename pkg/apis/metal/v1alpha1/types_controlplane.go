@@ -5,6 +5,8 @@ package v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	metal "github.com/ironcore-dev/gardener-extension-provider-ironcore-metal/pkg/apis/metal"
 )
 
 // +genclient
@@ -174,7 +176,7 @@ const (
 type CalicoBgpConfig struct {
 	// ASNumber is the default AS number used by a node.
 	// +required
-	ASNumber int `json:"asNumber"`
+	ASNumber metal.ASNumber `json:"asNumber"`
 
 	// nodeToNodeMeshEnabled enables the node-to-node mesh.
 	// +optional
@@ -209,7 +211,7 @@ type BgpPeer struct {
 
 	// ASNumber contains the AS number of the BGP peer.
 	// +required
-	ASNumber int `json:"asNumber"`
+	ASNumber metal.ASNumber `json:"asNumber"`
 
 	// NodeSelector is a key-value pair to select nodes that should have this peering.
 	// +optional
