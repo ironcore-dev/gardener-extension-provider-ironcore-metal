@@ -653,7 +653,7 @@ func getCalicoChartValues(
 			for _, peer := range calicoBgpConfig.BgpPeer {
 				peerMap := map[string]any{
 					"peerIP":       peer.PeerIP,
-					"asNumber":     peer.ASNumber,
+					"asNumber":     peer.ASNumber.ToUint32(),
 					"nodeSelector": peer.NodeSelector,
 				}
 				if len(peer.Filters) > 0 {
@@ -666,7 +666,7 @@ func getCalicoChartValues(
 
 	bgpValues := map[string]any{
 		"enabled":                true,
-		"asNumber":               calicoBgpConfig.ASNumber,
+		"asNumber":               calicoBgpConfig.ASNumber.ToUint32(),
 		"serviceLoadBalancerIPs": serviceLbIPs,
 		"serviceExternalIPs":     serviceExtIPs,
 		"serviceClusterIPs":      serviceClusterIPs,

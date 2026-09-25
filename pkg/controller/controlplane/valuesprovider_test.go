@@ -815,7 +815,7 @@ var _ = Describe("Valueprovider Reconcile", func() {
 					"enabled": true,
 					"bgp": map[string]any{
 						"enabled":                true,
-						"asNumber":               12345,
+						"asNumber":               uint32(12345),
 						"nodeToNodeMeshEnabled":  true,
 						"serviceLoadBalancerIPs": []string{"10.10.10.0/24", "10.20.20.10-10.20.20.30"},
 						"serviceExternalIPs":     []string{"10.10.10.0/24", "10.20.20.10-10.20.20.30"},
@@ -823,12 +823,12 @@ var _ = Describe("Valueprovider Reconcile", func() {
 						"bgpPeer": []map[string]any{
 							{
 								"peerIP":       "1.2.3.4",
-								"asNumber":     12345,
+								"asNumber":     uint32(12345),
 								"nodeSelector": "foo=bar",
 							},
 							{
 								"peerIP":       "1.2.3.5",
-								"asNumber":     12345,
+								"asNumber":     uint32(12345),
 								"nodeSelector": "foo=bar",
 							},
 						},
@@ -995,7 +995,7 @@ var _ = Describe("Valueprovider Reconcile", func() {
 					"enabled": true,
 					"bgp": map[string]any{
 						"enabled":                true,
-						"asNumber":               12345,
+						"asNumber":               uint32(12345),
 						"nodeToNodeMeshEnabled":  false,
 						"serviceLoadBalancerIPs": []string{"10.10.10.0/24", "10.20.20.10-10.20.20.30"},
 						"serviceExternalIPs":     []string{"10.10.10.0/24", "10.20.20.10-10.20.20.30"},
@@ -1003,7 +1003,7 @@ var _ = Describe("Valueprovider Reconcile", func() {
 						"bgpPeer": []map[string]any{
 							{
 								"peerIP":       "1.2.3.4",
-								"asNumber":     12345,
+								"asNumber":     uint32(12345),
 								"nodeSelector": "foo=bar",
 								"filters": []string{
 									"v4filter",
@@ -1011,7 +1011,7 @@ var _ = Describe("Valueprovider Reconcile", func() {
 							},
 							{
 								"peerIP":       "1.2.3.5",
-								"asNumber":     12345,
+								"asNumber":     uint32(12345),
 								"nodeSelector": "foo=bar",
 								"filters": []string{
 									"v6filter",

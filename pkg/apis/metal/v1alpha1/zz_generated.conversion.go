@@ -362,7 +362,7 @@ func Convert_metal_BGPFilterRule_To_v1alpha1_BGPFilterRule(in *metal.BGPFilterRu
 
 func autoConvert_v1alpha1_BgpPeer_To_metal_BgpPeer(in *BgpPeer, out *metal.BgpPeer, s conversion.Scope) error {
 	out.PeerIP = in.PeerIP
-	out.ASNumber = in.ASNumber
+	out.ASNumber = metal.ASNumber(in.ASNumber)
 	out.NodeSelector = in.NodeSelector
 	out.Filters = *(*[]string)(unsafe.Pointer(&in.Filters))
 	return nil
@@ -375,7 +375,7 @@ func Convert_v1alpha1_BgpPeer_To_metal_BgpPeer(in *BgpPeer, out *metal.BgpPeer, 
 
 func autoConvert_metal_BgpPeer_To_v1alpha1_BgpPeer(in *metal.BgpPeer, out *BgpPeer, s conversion.Scope) error {
 	out.PeerIP = in.PeerIP
-	out.ASNumber = in.ASNumber
+	out.ASNumber = metal.ASNumber(in.ASNumber)
 	out.NodeSelector = in.NodeSelector
 	out.Filters = *(*[]string)(unsafe.Pointer(&in.Filters))
 	return nil
@@ -387,7 +387,7 @@ func Convert_metal_BgpPeer_To_v1alpha1_BgpPeer(in *metal.BgpPeer, out *BgpPeer, 
 }
 
 func autoConvert_v1alpha1_CalicoBgpConfig_To_metal_CalicoBgpConfig(in *CalicoBgpConfig, out *metal.CalicoBgpConfig, s conversion.Scope) error {
-	out.ASNumber = in.ASNumber
+	out.ASNumber = metal.ASNumber(in.ASNumber)
 	out.NodeToNodeMeshEnabled = in.NodeToNodeMeshEnabled
 	out.ServiceLoadBalancerIPs = *(*[]string)(unsafe.Pointer(&in.ServiceLoadBalancerIPs))
 	out.ServiceExternalIPs = *(*[]string)(unsafe.Pointer(&in.ServiceExternalIPs))
@@ -403,7 +403,7 @@ func Convert_v1alpha1_CalicoBgpConfig_To_metal_CalicoBgpConfig(in *CalicoBgpConf
 }
 
 func autoConvert_metal_CalicoBgpConfig_To_v1alpha1_CalicoBgpConfig(in *metal.CalicoBgpConfig, out *CalicoBgpConfig, s conversion.Scope) error {
-	out.ASNumber = in.ASNumber
+	out.ASNumber = metal.ASNumber(in.ASNumber)
 	out.NodeToNodeMeshEnabled = in.NodeToNodeMeshEnabled
 	out.ServiceLoadBalancerIPs = *(*[]string)(unsafe.Pointer(&in.ServiceLoadBalancerIPs))
 	out.ServiceExternalIPs = *(*[]string)(unsafe.Pointer(&in.ServiceExternalIPs))

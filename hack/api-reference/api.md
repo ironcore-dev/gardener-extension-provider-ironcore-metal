@@ -151,7 +151,7 @@ string
 <td>
 <code>asNumber</code></br>
 <em>
-integer
+<a href="#asnumber">ASNumber</a>
 </em>
 </td>
 <td>
@@ -212,7 +212,7 @@ CalicoBgpConfig contains BGP configuration settings for calico.
 <td>
 <code>asNumber</code></br>
 <em>
-integer
+<a href="#asnumber">ASNumber</a>
 </em>
 </td>
 <td>
