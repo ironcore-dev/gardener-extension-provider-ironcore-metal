@@ -6,7 +6,7 @@ metadata:
 spec:
   logSeverityScreen: {{ .Values.bgp.logSeverityScreen }}
   nodeToNodeMeshEnabled: {{ .Values.bgp.nodeToNodeMeshEnabled }}
-  asNumber: {{ .Values.bgp.asNumber }}
+  asNumber: {{ printf "%.0f" .Values.bgp.asNumber }}
   {{- if .Values.bgp.serviceLoadBalancerIPs }}
   serviceLoadBalancerIPs:
   {{- range $cidr := .Values.bgp.serviceLoadBalancerIPs }}
