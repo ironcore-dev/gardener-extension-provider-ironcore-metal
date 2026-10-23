@@ -101,9 +101,19 @@ string
 </table>
 
 
+<h3 id="bgpfiltermatchsource">BGPFilterMatchSource
+</h3>
+<p><em>Underlying type: string</em></p>
+
+
+<p>
+BGPFilterMatchSource defines the route origin to match in a BGP filter rule.
+</p>
+
+
 <h3 id="bgpfilterrule">BGPFilterRule
 </h3>
-<p><em>Underlying type: <a href="#struct{cidr-string-"json:\"cidr\"";-matchoperator-string-"json:\"matchoperator\"";-action-string-"json:\"action\""}">struct{CIDR string "json:\"cidr\""; MatchOperator string "json:\"matchOperator\""; Action string "json:\"action\""}</a></em></p>
+<p><em>Underlying type: <a href="#struct{cidr-string-"json:\"cidr\"";-matchoperator-string-"json:\"matchoperator\"";-action-string-"json:\"action\"";-source-bgpfiltermatchsource-"json:\"source,omitempty\""}">struct{CIDR string "json:\"cidr\""; MatchOperator string "json:\"matchOperator\""; Action string "json:\"action\""; Source BGPFilterMatchSource "json:\"source,omitempty\""}</a></em></p>
 
 
 <p>

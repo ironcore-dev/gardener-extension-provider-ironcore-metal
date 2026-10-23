@@ -340,6 +340,7 @@ func autoConvert_v1alpha1_BGPFilterRule_To_metal_BGPFilterRule(in *BGPFilterRule
 	out.CIDR = in.CIDR
 	out.MatchOperator = in.MatchOperator
 	out.Action = in.Action
+	out.Source = metal.BGPFilterMatchSource(in.Source)
 	return nil
 }
 
@@ -352,6 +353,7 @@ func autoConvert_metal_BGPFilterRule_To_v1alpha1_BGPFilterRule(in *metal.BGPFilt
 	out.CIDR = in.CIDR
 	out.MatchOperator = in.MatchOperator
 	out.Action = in.Action
+	out.Source = BGPFilterMatchSource(in.Source)
 	return nil
 }
 

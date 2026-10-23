@@ -695,6 +695,9 @@ func processFilters(filtersConfig []metalapi.BGPFilterRule) ([]map[string]any, e
 			"action":        filter.Action,
 			"matchOperator": filter.MatchOperator,
 		}
+		if filter.Source != "" {
+			filterMap["source"] = filter.Source
+		}
 		filters = append(filters, filterMap)
 	}
 	return filters, nil

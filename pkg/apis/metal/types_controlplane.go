@@ -216,4 +216,16 @@ type BGPFilterRule struct {
 
 	// +kubebuilder:validation:Enum=Accept;Reject
 	Action string
+
+	// Source matches the route origin. When set to "RemotePeers", the rule
+	// only applies to routes learned from BGP peers, not locally originated routes.
+	Source BGPFilterMatchSource
 }
+
+// BGPFilterMatchSource defines the route origin to match in a BGP filter rule.
+type BGPFilterMatchSource string
+
+const (
+	// BGPFilterMatchSourceRemotePeers matches routes learned from BGP peers.
+	BGPFilterMatchSourceRemotePeers BGPFilterMatchSource = "RemotePeers"
+)
