@@ -13,10 +13,10 @@ require (
 	github.com/go-logr/logr v1.4.4
 	github.com/imdario/mergo v0.3.16
 	github.com/ironcore-dev/controller-utils v0.9.9
-	github.com/onsi/ginkgo/v2 v2.33.1
+	github.com/onsi/ginkgo/v2 v2.34.0
 	github.com/onsi/gomega v1.44.0
 	github.com/spf13/cobra v1.10.2
-	github.com/spf13/pflag v1.0.10
+	github.com/spf13/pflag v1.1.0
 	go.uber.org/mock v0.6.0
 	go.uber.org/zap v1.28.0
 	k8s.io/api v0.36.4
